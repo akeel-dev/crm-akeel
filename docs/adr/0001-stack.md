@@ -277,15 +277,23 @@ infraestrutura.
 
 ## Guardado por
 
+**Emenda de 2026-11-24 (`reviews/0-06.md` N1 e N2; backend `77a5ded`):** os padrões desta
+tabela eram `..platform..`, `..platform.jobs..` e `..platform.storage..`, que casam com
+qualquer pacote com um segmento `platform` (um `deals.platform` escapava; sabotagem T2 do
+Revisor, `exit=0`). Foram ancorados em `br.com.akeel.crm.platform..`,
+`br.com.akeel.crm.platform.jobs..` e `br.com.akeel.crm.platform.storage..`, e a regra de
+`@Scheduled` passou a pegar também a meta-anotação (T6). A tabela abaixo já usa os padrões
+ancorados. Medido em 2026-11-24 com `comandos.arquitetura`: `Tests run: 13, Failures: 0`.
+
 Os testes nascem na Onda 0; aqui só a proposta. Todos rodam em `comandos.arquitetura`
 (exceto onde indicado).
 
 | Decisão | Teste que fica vermelho |
 |---|---|
 | Monólito modular (D-03, §4.3) | `ModularityTest`: `ApplicationModules.of(CrmApplication.class).verify()` (ciclos e acesso a internos de outro módulo). A lista de módulos que ele imprime é a mesma do diagrama de módulos (conferência do Arquiteto) |
-| Sem cron nem thread solta (§4.2) | `ArchitectureTest`: nenhum método com `@Scheduled`; nenhuma classe fora de `platform..` usa `java.util.Timer`, `java.util.concurrent.Executors` ou `new Thread` |
-| db-scheduler isolado | `ArchitectureTest`: só `..platform.jobs..` depende de `com.github.kagkarlsson..` |
-| S3 isolado (troca de provedor por configuração) | `ArchitectureTest`: só `..platform.storage..` depende de `software.amazon.awssdk..` |
+| Sem cron nem thread solta (§4.2) | `ArchitectureTest`: nenhum método com `@Scheduled`, direto ou meta-anotado; nenhuma classe fora de `br.com.akeel.crm.platform..` usa `java.util.Timer`, `java.util.concurrent.Executors` ou `new Thread` |
+| db-scheduler isolado | `ArchitectureTest`: só `br.com.akeel.crm.platform.jobs..` depende de `com.github.kagkarlsson..` |
+| S3 isolado (troca de provedor por configuração) | `ArchitectureTest`: só `br.com.akeel.crm.platform.storage..` depende de `software.amazon.awssdk..` |
 | Nenhum provedor de S3 no código | `StorageConfigTest` (no pacote de arquitetura): nenhum arquivo em `backend/src/main/**` contém `r2.cloudflarestorage.com`, `amazonaws.com` nem outro host de provedor; `crm.storage.endpoint` não tem valor padrão |
 | `platform.storage` funciona com um S3 que não é o da produção | Teste de integração (suíte, do QA) contra a imagem `dxflrs/garage` como contêiner genérico: pré-assina PUT e GET, faz multipart e confere o CORS |
 | jOOQ como acesso principal (§4.2) | `ArchitectureTest`: `jakarta.persistence..` só é permitido em pacotes listados explicitamente (vazia no início); quem incluir abre a exceção no teste, com o motivo |

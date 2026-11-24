@@ -1,12 +1,12 @@
 # Módulos do backend
 
-Dono: Arquiteto. Atualizado: 2026-11-24 (story 0-06; backend no commit `27ecdcc`).
+Dono: Arquiteto. Atualizado: 2026-11-24 (depois da 0-08; backend no commit `f2f6a38`).
 
 **Fonte do que existe:** a linha `[ModularityTest] módulos detectados` que o
-`ModularityTest` imprime em `comandos.arquitetura`. Em 2026-11-24 ela diz
-`módulos detectados (0): (nenhum: regra sem alvo ainda)`: só existe
-`br.com.akeel.crm.CrmApplication`, no pacote raiz. A cada módulo novo, o Arquiteto
-confere que esta lista e a do teste batem; divergência é achado.
+`ModularityTest` imprime em `comandos.arquitetura`. Em 2026-11-24, no backend `f2f6a38`,
+ela diz `[ModularityTest] módulos detectados (1): platform` (`Tests run: 13, Failures: 0`).
+A cada módulo novo, o Arquiteto confere que esta lista e a do teste batem; divergência é
+achado. Conferido: batem.
 
 **Fonte do que vai existir:** spec §4.3 (22 módulos) e ADR 0001, decisão 3
 (`platform`, com um subpacote por adaptador). Um pacote de topo fora dessa lista deixa o
@@ -16,15 +16,17 @@ confere que esta lista e a do teste batem; divergência é achado.
 
 | Módulo | Pacote | Desde |
 |---|---|---|
-| (nenhum) | só `br.com.akeel.crm` (`CrmApplication`) | 0-05 |
+| (raiz) | `br.com.akeel.crm` (`CrmApplication`) | 0-05 |
+| `platform` | `br.com.akeel.crm.platform.openapi` (`OpenApiConfig`: springdoc 3.1.0, `/v3/api-docs`, sem Swagger UI) | 0-08 |
 
-## Ainda não existe
+## Existe e vai existir
 
 ```mermaid
 flowchart TB
   app["CrmApplication<br/>(existe)"]
 
-  subgraph platform["platform (ainda não existe)"]
+  subgraph platform["platform (existe)"]
+    openapi["platform.openapi<br/>(existe)"]
     jobs["platform.jobs<br/>único com db-scheduler"]
     storage["platform.storage<br/>único com AWS SDK (S3)"]
     mail["platform.mail"]
@@ -73,8 +75,8 @@ contra o `ModularityTest`.
 |---|---|
 | Sem ciclo entre módulos e sem acesso a pacote interno de outro módulo | `ModularityTest` (`ApplicationModules.verify()`) |
 | Pacote de topo só da §4.3 ou `platform` | `ModularityTest` |
-| Sem `@Scheduled`; `Timer`, `Executors`, `new Thread` e `Thread.ofVirtual/ofPlatform/startVirtualThread` só em `platform..` | `ArchitectureTest` |
-| db-scheduler só em `platform.jobs`; AWS SDK só em `platform.storage` | `ArchitectureTest` |
+| Sem `@Scheduled`, direto ou meta-anotado; `Timer`, `Executors`, `new Thread` e `Thread.ofVirtual/ofPlatform/startVirtualThread` só em `br.com.akeel.crm.platform..` | `ArchitectureTest` |
+| db-scheduler só em `br.com.akeel.crm.platform.jobs..`; AWS SDK só em `br.com.akeel.crm.platform.storage..` | `ArchitectureTest` |
 | `jakarta.persistence` só em pacotes listados (lista vazia) | `ArchitectureTest` |
 | Claims do token só em `identity` (ADR 0001, P-19) | `ArchitectureTest` |
 | Sem back-channel logout (ADR 0003, emenda §15); sem `com.agui` (ADR 0004) | `ArchitectureTest` |
