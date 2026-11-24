@@ -35,7 +35,8 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-Nada.
+
+**Bloqueio de ambiente (humano):** liberar disco no Mac e reiniciar o Docker Desktop. Depois: remedir 0-05, rodar de novo a verificação da 0-02 (DevOps) e `docker compose down -v` dos restos.
 
 ## 2026-11-24 (tarde) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -91,6 +92,17 @@ Respostas à TI no ADR 0003, emenda §15, e na spec P-18: callback
 | Story | Estado | Evidência |
 |---|---|---|
 | 0-01 | **fechada** (14:40–14:46, ~6 min) | `pre_requisito` exit 0 remedido no `main`; `reviews/0-01.md` sem bloqueantes; raiz `cb1bff4` + `0759a7f`, backend `e60799f`, frontend `ce18bd6` |
+| 0-05 | QA `7ed1b96` vermelho (exit 127, sem build) · Dev `5b29975`: 7/7 verdes **no relato do Dev** | **remedição do Orquestrador falhou por ambiente** (Docker somente leitura): suíte inexecutável, não vermelha |
+| 0-14 | **fechada** (14:49–15:10, ~21 min) · QA `2c46456` · Dev `0e63a74` · remedido: 5/5 verdes, exit 0 | `reviews/0-14.md` sem bloqueantes; Registro da story a preencher (Planejador) |
+| 0-02 | DevOps: arquivos prontos, **sem commit** | bloqueada: Docker somente leitura (disco do Mac 99%, 2,1 GiB livres) |
+
+Não bloqueantes da 0-14 (`reviews/0-14.md`), que vão para stories seguintes:
+- N1: a versão de Node diverge entre `time.yml` (`v22+`), `package.json` (`>=22.12`), o lock
+  (`^22.13 || ^24 || >=26`) e o ADR (26 LTS). **Proposta:** `engines` = `^22.13 || ^24 || >=26`
+  e o mesmo no `pre_requisito` (o `time.yml` é do Pedro). A máquina usa o Node 23, fora do suporte.
+- N2: a regra de lint pt-BR não pega atributos (`aria-label`, `title`, `placeholder`) nem
+  `{"texto"}` (RF-UI-03). Para 0-16 ou 0-17.
+- N3: o lint fica fora do `npm test` e da `suite`. Para 0-15 (CI).
 
 Não bloqueante, que fica registrado: `!.env.example` nos três `.gitignore` libera um `.env*`
 para versionamento (reviews/0-01.md item 3). Fica enquanto o arquivo não existir; o Revisor
@@ -107,4 +119,5 @@ confere quando ele aparecer.
 
 ### Em voo
 
-Nada.
+
+**Bloqueio de ambiente (humano):** liberar disco no Mac e reiniciar o Docker Desktop. Depois: remedir 0-05, rodar de novo a verificação da 0-02 (DevOps) e `docker compose down -v` dos restos.
