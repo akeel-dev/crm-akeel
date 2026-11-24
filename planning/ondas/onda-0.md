@@ -57,7 +57,7 @@ pela Admin API (P-19). Nada nesta onda autoriza por `roles` ou `groups` (0-09, c
 | 0-14 | Frontend sobe, testa e constrói; rotas, cache, i18n pt-BR | front | qa, dev | D-04, §4.2, RF-UI-03 (idioma) | leve | 0-01 |
 | 0-15 | CI do frontend e imagem estática | front | devops | §4.5 passos 1–3, RNF-09 | leve | 0-14 |
 | 0-16 | Datas, horas e dinheiro no formato brasileiro e no fuso do usuário | front | qa, dev | RF-UI-03, RF-UI-04, §6.1, §12, D-02 | leve | 0-14 |
-| 0-17 | Componentes base acessíveis sobre tokens; cores da paleta do Pedro + `bg-dark`, Inter self-hosted, "CRM Akeel" com wordmark e favicon, tudo provisório | front | qa, dev | §4.2 Componentes, RF-UI-07, 08, 09, RNF-10, D-22; P-12 (provisória, `decisoes §12`; nome por `§13`) | leve | 0-16 |
+| 0-17 | Componentes base acessíveis sobre tokens; cores da paleta do Pedro + `bg-dark`, Inter self-hosted, "CRM Akeel" com wordmark e favicon, tudo provisório | front | qa, dev | §4.2 Componentes, RF-UI-03 (texto fixo, crit. 14), RF-UI-07, 08, 09, RNF-10, D-22; P-12 (provisória, `decisoes §12`; nome por `§13`) | leve | 0-16 |
 | 0-18 | Cliente TS gerado do contrato, igual ao do backend | front | qa, dev | §4.2 Contrato, §12, §13.2 | leve | 0-17; entre repos: 0-09 |
 | 0-19 | SPA leva ao login, mostra quem entrou, nunca toca em token | front | qa, dev | D-07, §5.1, P-19, RF-UI-03, RF-UI-07 | **completo (IAM)** | 0-18 |
 | 0-20 | Ponta a ponta: login no Keycloak local e o nome na tela | front | qa, dev | D-07, §5.1, P-18, §12 e2e, RNF-11 (parcial) | **completo (IAM)** | 0-19; entre repos: 0-09, 0-02 |
@@ -213,7 +213,7 @@ back-channel do ADR 0003; 0-11, 0-12: as duas regras do ADR 0002); `compose.yaml
 
 | Item | Story | Ou: fora |
 |---|---|---|
-| RF-UI-03 | 0-14 (idioma), 0-16 (formatos) | — |
+| RF-UI-03 | 0-14 (idioma), 0-16 (formatos), 0-17 crit. 14 (texto fixo em atributos e expressões; N2 de `reviews/0-14.md`) | — |
 | RF-UI-04 | 0-16 | origem do fuso (`app_user.time_zone`): Onda 1 |
 | RF-UI-05 (tempo real) | — | SSE + `LISTEN/NOTIFY` entram com a primeira tela que os pede, com a regra de "Notas para stories futuras" (fechar com a sessão e o token) |
 | RF-UI-06 (responsivo) | — | entra com as telas |
