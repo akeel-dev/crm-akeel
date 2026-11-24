@@ -101,7 +101,7 @@ Respostas à TI no ADR 0003, emenda §15, e na spec P-18: callback
 | 0-08 | **fechada** · QA `427acf8` · Dev `f2f6a38` · remedido 27/27 · `reviews/0-08.md` sem bloqueantes | N1 (teste de estabilidade na mesma JVM é fraco), N4 (`/v3/api-docs` anônimo: decidir na 0-09), N5 (`cmp` do raiz vermelho até a 0-18) |
 | 0-09 | QA `ac8b867` · Dev `ad9b009` · remedido 87/87 · critério 18 (classes reais) ✅ Arquiteto | QA refazendo as 12 sabotagens no código real; depois Revisor |
 | 0-18 | **fechada** · QA `0f2656d` · DevOps `725039b` · Dev `d8c7b2f` · remedido 170/170 · `reviews/0-18.md` sem bloqueantes | **suíte completa do raiz exit 0 pela 1ª vez (17:31)**; overrides do TS em §23 |
-| 0-19 | QA em voo | — |
+| 0-19 | **fechada** · QA `ffaf0b4` + `7c0449c` + `a826164` · Dev `ec25124` + `9d37f99` · remedido 239/239 · `reviews/0-19.md` sem bloqueantes; 13/14 sabotagens do QA vermelhas, a 14ª virou teste | N2: o ADR 0003 ainda diz `csrf.spa()` (§22 aceitou o handler simples) → Arquiteto; N6: tela em branco fora de 200/401 → candidata a story; Registro → Planejador |
 | 0-07 | **fechada** · DevOps `d18f77d` · `reviews/0-07.md` sem bloqueantes · **CI verde no GitHub** (run 45462660612: suíte, Trivy, imagem) | N1 (média): a spec pede análise estática e a story não pediu (Planejador decide); N2–N5 baixos |
 | 0-17 | **fechada** · QA `5bbb4fb` + `78b110b` · Dev `ec80562` + `2b172f9` · remedido 159/159 | `reviews/0-17.md`: B1/B2 fechados; N1 (COLOR_PAIRS sem amarração ao CSS) e N2 (foco `accent-ink` sobre escuro) para a fila; **falta cor de erro na paleta** (identidade, §12) |
 
@@ -135,4 +135,4 @@ confere quando ele aparecer.
 **Para a COLHEITA:** (1) o Revisor da 0-17 rodou sabotagens no `frontend/` real quando o clone
 sumiu (desfeito, sem perda): sabotagem só em clone, e conferir o `cd` antes. (2) dois agentes
 rodando `npm ci` no mesmo `frontend/node_modules` se atropelam: não paralelizar a suíte do
-frontend. (3) `rclone --checksum` sobre remote `crypt` compara só o tamanho (0-03).
+frontend. (3) clones no scratchpad compartilhado somem entre agentes, e um `cd` que falha roda o comando no lugar errado (dois Revisores hoje): cada agente usa um diretório único e aborta se o `cd` falhar. (4) `rclone --checksum` sobre remote `crypt` compara só o tamanho (0-03).
