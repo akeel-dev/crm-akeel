@@ -65,17 +65,33 @@ ADRs 0001, 0002 e 0003 aceitos (`decisoes §10–§11`). Tokens do Keycloak sem 
 anotado no ADR 0003. A paleta do Pedro (`decisoes/2026-11-24-paleta.md`) entrou na 0-17.
 Raiz commitado e publicado em `github.com/akeel-dev/crm-akeel` (privado).
 
-**Pendências do humano (nenhuma bloqueia a 0-01):**
-- [ ] `bg-dark` sem hex na paleta (a 0-17 não cria o token até lá).
-- [ ] Revogar o token do GitHub colado na conversa de 24/11 e gerar outro.
-- [ ] Com a Akeel: P-07 (data), P-15 (realm `sed`), resto da P-12 (tipografia, logo),
-      destino do backup com dados no Brasil.
+**Decidido em §12–§14:** identidade provisória (`bg-dark #122428`, Inter self-hosted,
+"CRM Akeel", wordmark em texto); backup no Brasil, com o provedor a definir. Keycloak real:
+realm `crm` em `akpannel.akeel.com.br`, operado pela TI. **P-18:** BFF mantido. **P-19:**
+o CRM manda nos papéis e sincroniza `/Perfis/*`. **A spec está na v1.2** (o Orquestrador
+foi autorizado a mantê-la atual, §13). ADRs 0001 e 0003 emendados; stories 0-02, 0-09,
+0-17, 0-19 e 0-20 ajustadas.
+
+**§15:** ADR 0004 aceito (sem AG-UI); exceção do `id_token_hint` aceita. A TI entregou o
+realm `crm` (Keycloak 26.8.2; `crm-bff` e `crm-bff-dev` criados; sessão de 8 h/30 d). Os
+secrets estão **fora do repositório**, em `~/.config/crm-akeel/keycloak.env` (permissão 600).
+Respostas à TI no ADR 0003, emenda §15, e na spec P-18: callback
+`/login/oauth2/code/keycloak`; sem backchannel logout na v1; front e BFF no mesmo domínio.
+
+**Nenhuma decisão pendente do Pedro.**
+
+**Pendências do humano e da TI (nenhuma bloqueia a 0-01):**
+- [ ] Pedro → TI: repassar as três respostas e pedir que cadastre `https://crm.akeel.com.br/`
+      (exato) como redirect e post-logout redirect no `crm-bff`.
+- [ ] Pedro: mapear os conjuntos de permissões nos 4 perfis (P-19, Onda 1).
+- [ ] Trocar todos os secrets e o token do GitHub antes da produção (combinado com o Pedro).
+- [ ] Com a Akeel: P-07 (data), provedor do backup no Brasil.
 
 ### Próxima ação de cada papel
 
 | Papel | Próxima ação | Bloqueada por |
 |---|---|---|
-| devops | 0-01: criar os repositórios de produto (`crm-akeel-backend`, `crm-akeel-frontend`) | nada |
+| devops | 0-01: criar os repositórios de produto (`crm-akeel-backend`, `crm-akeel-frontend`) | nada: pronto para despachar |
 | qa, dev, revisor | trilhas B e F, depois de 0-01 | 0-01 |
 | arquiteto, planejador | — | — |
 

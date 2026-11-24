@@ -1,8 +1,16 @@
 # CRM Akeel: especificação de produto e técnica (v1)
 
-> Documento para o time de desenvolvimento. Versão 1.1 · 23/11/2026 (sem plano de sprints: o planejamento é do time) · Nome do produto provisório: **CRM Akeel**.
+> Documento para o time de desenvolvimento. Versão 1.2 · 24/11/2026 (v1.1 de 23/11/2026; o nome do arquivo continua `-v1.1` para não quebrar as referências) (sem plano de sprints: o planejamento é do time) · Nome do produto provisório: **CRM Akeel**.
 >
 > Fonte principal: o pacote de estudo do Pipedrive (pasta `pipedrive/`, entregue junto com este documento), as decisões tomadas no planejamento e o projeto de código aberto warpdrive (licença MIT), usado como referência de implementação.
+
+> **Mudanças da v1.2 (24/11/2026), feitas pelo Orquestrador a pedido do Pedro** (`planning/decisoes/2026-11-24.md` §12 e §13):
+> - Keycloak: realm próprio **`crm`** em `akpannel.akeel.com.br`, fora da VPS do CRM, no lugar do realm `sed` (D-07, §4.1, §5.1, §5.2, P-15).
+> - Clientes, claims e conta de serviço do realm registrados em §5.1 e §5.2.
+> - Dois conflitos novos foram **decididos pelo Pedro em 24/11**: P-18 (mantém o BFF; falta a TI criar um cliente confidencial de login) e P-19 (o CRM continua mandando nos papéis e sincroniza o grupo `/Perfis/*` no Keycloak).
+> - Respostas parciais registradas em P-12 (identidade provisória) e P-17 (arquivos e backup).
+> - Realm `crm` entregue pela TI em 24/11 (Keycloak 26.8.2): clientes `crm-bff` e `crm-bff-dev` criados, sessão confirmada (§5.1, P-18). A configuração do Keycloak é ponto de partida: o time pode pedir mudanças à TI (`decisoes §15`).
+> - Decisões técnicas que não mudam o produto ficam nos ADRs (`docs/adr/`), não aqui.
 
 ## Sumário
 
@@ -136,9 +144,9 @@ Uso interno de uma empresa. Premissas a confirmar com o PO (P-11):
 | D-04 | Frontend | **React + TypeScript + Vite, SPA** (seção 4.2) |
 | D-05 | Banco | **PostgreSQL** (17 ou superior) |
 | D-06 | Infraestrutura | **VPS na Hostinger, no Brasil**, atrás do **Cloudflare** (DNS, proxy, Tunnel e Access) |
-| D-07 | Login | **Keycloak, realm `sed`**: login com senha própria ou com Google, restrito a contas do domínio `akeel.com.br` |
+| D-07 | Login | **Keycloak, realm `crm`**, em `https://akpannel.akeel.com.br` (v1.2; antes: realm `sed`): login com senha própria ou com Google, restrito a contas do domínio `akeel.com.br`. Detalhes em §5.1 |
 | D-08 | Cadastro de usuários | **Somente por convite** do administrador na v1. Cadastro aberto (endpoint público) fica para o futuro |
-| D-09 | Fonte de verdade | O **CRM** é a fonte de verdade de perfil, papéis e permissões. O Keycloak só autentica |
+| D-09 | Fonte de verdade | O **CRM** é a fonte de verdade de perfil, papéis e permissões. O Keycloak só autentica. **Confirmado na v1.2 (P-19):** quando o papel muda no CRM, o CRM troca o grupo `/Perfis/*` do usuário pela Admin API, para o Keycloak ficar coerente; a autorização do CRM não lê o claim `roles` |
 | D-10 | E-mail do sistema | **Relay SMTP do Google Workspace** (seção 10.4), remetente `Akeel <no-reply@akeel.com.br>` |
 | D-11 | E-mail de vendas e agenda | **Fora da v1.** Será resolvido depois que a aplicação estiver pronta (seção 15). Recomendação registrada: Gmail API + Calendar API com OAuth por usuário, app interno do Workspace |
 | D-12 | WhatsApp | **Entra na v1**, pela API oficial da Meta (Cloud API), com a conta da própria Akeel |
@@ -253,7 +261,6 @@ flowchart LR
       PX[Proxy reverso]
       API[crm-api<br/>Spring Boot - modo API]
       WK[crm-worker<br/>Spring Boot - modo worker]
-      KC[Keycloak<br/>realm sed]
       PG[(PostgreSQL)]
       S3[(Armazenamento S3<br/>arquivos)]
       PDF[Gerador de PDF]
@@ -264,6 +271,7 @@ flowchart LR
       PLAT[Plataformas de automação da Akeel]
       ESIGN[Provedor de assinatura eletrônica]
       CNPJ[Consulta pública CNPJ/CEP]
+      KC[Keycloak akpannel<br/>realm crm]
     end
     B --> CF --> PX
     PX --> API
@@ -362,7 +370,7 @@ flowchart LR
 
 **Rede:**
 - A VPS não expõe portas de aplicação à internet: o tráfego entra pelo **Cloudflare Tunnel**.
-- O console de administração do Keycloak e o painel interno ficam atrás do **Cloudflare Access**.
+- O painel interno fica atrás do **Cloudflare Access**. *(v1.2: o Keycloak está em `akpannel.akeel.com.br`, operado pela TI da Akeel e fora da VPS do CRM; a proteção do console dele é responsabilidade da TI.)*
 - Endpoints públicos necessários: SPA, API, callback do Keycloak, webhooks (WhatsApp, assinatura eletrônica, plataformas) e páginas públicas (formulários, visualização de proposta).
 
 ### 4.6 Backups
@@ -371,7 +379,7 @@ flowchart LR
 |---|---|
 | PostgreSQL | Backup completo diário + arquivamento contínuo do WAL (ex.: pgBackRest), **cópia fora da VPS** em provedor com dados no Brasil |
 | Arquivos (S3) | Replicação diária fora da VPS |
-| Keycloak | Banco do Keycloak incluído na mesma política |
+| Keycloak | *(v1.2)* Fora do escopo do CRM: o Keycloak em `akpannel` é operado e copiado pela TI da Akeel. O backup do CRM cobre só o PostgreSQL do CRM e os arquivos |
 | Objetivos | RPO ≤ 15 min · RTO ≤ 4 h |
 | Teste de restauração | **Mensal**, documentado. Backup sem restauração testada não conta |
 | Retenção | 35 dias (diários) + 12 mensais. Conflito com pedidos de exclusão de titulares tratado na política de retenção (P-08) |
@@ -380,9 +388,44 @@ flowchart LR
 
 ## 5. Identidade, segurança e permissões
 
-### 5.1 Autenticação (Keycloak, realm `sed`)
+### 5.1 Autenticação (Keycloak, realm `crm`)
 
-- O CRM é um **cliente confidencial** no realm `sed`. Se outros sistemas da Akeel usam o mesmo realm, os usuários ganham login único entre eles.
+> Atualizado na v1.2 com a configuração informada pelo Pedro em 24/11/2026. O que está marcado *(provisório)* pode mudar. Os conflitos com o desenho original foram decididos em **P-18** (BFF mantido) e **P-19** (o CRM manda nos papéis), §14.1.
+
+**Servidor e realm:**
+- Keycloak **26.8.2** fora da VPS do CRM: `https://akpannel.akeel.com.br`, realm **`crm`**, operado pela TI da Akeel. O nome do realm vem de configuração (`KEYCLOAK_REALM=crm`) e nunca é fixo no código.
+- Issuer: `https://akpannel.akeel.com.br/realms/crm`.
+- Discovery: `https://akpannel.akeel.com.br/realms/crm/.well-known/openid-configuration` (endpoints de autorização, token, JWKS e logout).
+- Domínio do front: `https://crm.akeel.com.br` *(provisório)*.
+
+**Clientes configurados no realm:**
+
+| client_id | Tipo | Uso |
+|---|---|---|
+| `crm-web` | Público, sem secret. Authorization Code + PKCE `S256`, `scope=openid` | Configurado pela TI na primeira versão. **Pela P-18, o CRM não usa este cliente** |
+| `crm-web-dev` | Público | Desenvolvimento local: aceita `http://localhost:5173` e `http://localhost:3000` |
+| `crm-api` | Confidencial, grant `client_credentials` (conta de serviço) | Admin API (§5.2, RF-IAM-02). Também é a audiência que a API exige no JWT |
+| `crm-bff` | **Confidencial**, Authorization Code com **PKCE `S256` obrigatório** (sem PKCE: `Missing parameter: code_challenge_method`) | Login do BFF em produção. Redirect cadastrado: `https://crm.akeel.com.br/login/oauth2/code/keycloak` |
+| `crm-bff-dev` | Confidencial, mesmas regras do `crm-bff` | Desenvolvimento local: aceita qualquer caminho em `localhost:8080`, `5173` e `3000` |
+
+- O access token dura **5 minutos** e é renovado pelo refresh token.
+- Logout pelo endpoint `end_session`, com `id_token_hint` e `post_logout_redirect_uri`.
+- Os secrets de `crm-bff`, `crm-bff-dev` e `crm-api` chegam por canal seguro e **nunca** entram em repositório. Entram por variável de ambiente (ADR 0003).
+- **Sessão no realm (confirmada pela TI em 24/11):** SSO Session Idle **8 h**, SSO Session Max **30 dias**, *Revoke Refresh Token* desligado. O refresh token vale enquanto a sessão estiver ativa.
+- **Mesmo domínio:** `crm.akeel.com.br` serve a SPA e o BFF atrás do mesmo proxy (`/api/`, `/oauth2/authorization/`, `/login/oauth2/code/` e `/logout` vão para o backend). Sem CORS e sem cookie em `.akeel.com.br` (ADR 0003).
+- **Sem backchannel logout na v1:** a sessão encerrada no Keycloak derruba a do CRM em até 5 min, quando o refresh falha (ADR 0003).
+- **Logout:** o `id_token_hint` passa pelo navegador no redirecionamento do `end_session`. É uma exceção estreita ao "tokens só no servidor", aceita pelo Pedro (`decisoes §15`), porque o id_token não dá acesso à API.
+
+**Validação do JWT na API:**
+- Issuer acima e assinatura conferida pelo JWKS do discovery.
+- `aud` precisa conter `crm-api`.
+- Claim `roles`: lista simples, já com os papéis de baixo incluídos (um gestor recebe `gestor`, `vendedor` e `visualizador`). Valores possíveis: `admin`, `gestor`, `vendedor`, `visualizador`.
+- Claim `groups`: caminho completo do grupo, ex.: `/Equipes/Comercial`.
+- `preferred_username` é o próprio e-mail.
+
+**Desenho do login: BFF, confirmado pela P-18 em 24/11/2026** (é o que os ADRs 0001 e 0003, aceitos, implementam). O cliente público `crm-web` **não** é usado para login, porque deixaria tokens no navegador:
+
+- O CRM é um **cliente confidencial** no realm. *(v1.1 dizia realm `sed`.)*
 - **Padrão BFF (Backend for Frontend):**
   - o backend faz o fluxo OIDC Authorization Code + PKCE;
   - os tokens ficam **só no servidor**;
@@ -399,7 +442,7 @@ flowchart LR
 sequenceDiagram
     participant Admin
     participant CRM
-    participant KC as Keycloak (sed)
+    participant KC as Keycloak (realm crm)
     participant U as Usuário
     Admin->>CRM: Convida (nome, e-mail @akeel.com.br, grupo, conjunto de permissões)
     CRM->>KC: Admin API: cria usuário (habilitado, e-mail) + ações obrigatórias
@@ -410,7 +453,12 @@ sequenceDiagram
 ```
 
 - **RF-IAM-01** Só e-mails `@akeel.com.br` podem ser convidados na v1.
-- **RF-IAM-02** O CRM usa uma **conta de serviço** no Keycloak com a permissão mínima de gerenciar usuários do realm.
+- **RF-IAM-02** O CRM usa uma **conta de serviço** no Keycloak com a permissão mínima de gerenciar usuários do realm. Na v1.2:
+  - cliente `crm-api`, grant `client_credentials`; base da Admin API: `https://akpannel.akeel.com.br/admin/realms/crm`;
+  - pode buscar e criar usuários, colocar usuários em grupos e enviar o e-mail de convite; **não** pode alterar o realm nem dar permissão de admin do Keycloak;
+  - no Keycloak, o papel de cada usuário vem do **grupo** em que ele está: `/Perfis/Administradores`, `/Perfis/Gestores`, `/Perfis/Vendedores` ou `/Perfis/Visualizadores`. **Não se atribuem papéis direto no usuário.** Pela P-19, o CRM decide o papel e mantém esse grupo em sincronia ao convidar e ao mudar o papel;
+  - grupos: `GET /groups?search=...`;
+  - convite: `PUT /users/{id}/execute-actions-email?client_id=crm-bff&redirect_uri=https://crm.akeel.com.br/`, com o corpo `["UPDATE_PASSWORD","VERIFY_EMAIL"]`. O link vale **72 h**. Um `redirect_uri` fora dos cadastrados no `crm-bff` devolve 400.
 - **RF-IAM-03** Login de alguém que não foi convidado mostra uma tela "acesso não liberado" e registra o evento no log de segurança. Nenhum usuário é criado automaticamente.
 - **RF-IAM-04** **Desativar** um usuário no CRM:
   - desativa no Keycloak e encerra as sessões ativas;
@@ -1858,7 +1906,7 @@ Usado por webhooks, automações, notificações, tempo real e auditoria. Nome n
 
 ### 10.4 E-mail do sistema (relay do Google Workspace)
 
-Pronto e testado pela Akeel (entrega interna e externa com SPF, DKIM e DMARC aprovados). O Keycloak (realm `sed`) já usa a mesma configuração.
+Pronto e testado pela Akeel (entrega interna e externa com SPF, DKIM e DMARC aprovados). O Keycloak (realm `sed`) já usa a mesma configuração; o realm `crm` (v1.2) precisa usar a mesma, a confirmar com a TI.
 
 | Parâmetro | Valor |
 |---|---|
@@ -2000,12 +2048,14 @@ Medidos na VPS de produção com o volume da seção 1.3.
 | P-09 | Workspace: restringir o relay a remetentes específicos ou exigir autenticação; MFA obrigatório para todos | Akeel (admin do Workspace) | Fundação (segurança do relay, MFA) |
 | P-10 | E-mail de vendas (pós-v1): OAuth por usuário (recomendado) ou delegação de domínio | Akeel (admin do Workspace) | Pós-v1 |
 | P-11 | Premissas de volume (seção 1.3) | Akeel | Dimensionamento (RNF) |
-| P-12 | **Nome do produto, identidade visual e design system** | Akeel (design) | Frontend (design system) |
+| P-12 | **Nome do produto, identidade visual e design system**. *Provisório desde 24/11:* paleta do Pedro + `bg-dark #122428`, fonte Inter servida pelo próprio front, wordmark em texto (`planning/decisoes/2026-11-24-paleta.md`, §12). Definitivo com a Akeel | Akeel (design) | Frontend (design system) |
 | P-13 | Regras de distribuição de leads (rodízio, por origem, por segmento) | Akeel (comercial) | LEA (distribuição) |
 | P-14 | Lista final de ordenações do quadro e campos extras padrão do card | PO | BRD (ordenação e cards) |
-| P-15 | Confirmar que o CRM será cliente do realm `sed` compartilhado com outros sistemas | Akeel (TI) | IAM |
+| P-15 | ~~Confirmar que o CRM será cliente do realm `sed` compartilhado com outros sistemas~~ **Respondida na v1.2:** realm próprio `crm` (§5.1) | Akeel (TI) | IAM |
 | P-16 | Provedor de consulta pública de CNPJ e CEP | Time técnico | CON (CNPJ e CEP) |
-| P-17 | Solução de armazenamento S3 na VPS e destino do backup externo (provedor com dados no Brasil) | Time técnico + TI | Infraestrutura (arquivos e backup) |
+| P-17 | Solução de armazenamento S3 na VPS e destino do backup externo (provedor com dados no Brasil). **Em parte respondida:** arquivos no Garage na VPS (ADR 0001); o destino do backup continua aberto, mas será **no Brasil**, e o mecanismo é trocável por configuração | Time técnico + TI | Infraestrutura (arquivos e backup) |
+| P-18 | ~~**BFF × cliente público.**~~ **Decidida em 24/11 (Pedro): manter o BFF.** A TI criou `crm-bff` e `crm-bff-dev` e confirmou a sessão e a versão (§5.1). Respostas do time à TI (ADR 0003, emenda §15): callback `https://crm.akeel.com.br/login/oauth2/code/keycloak`; **sem backchannel logout na v1** (deixar vazios os campos *Backchannel* e *Front-channel logout URL*); front e BFF no **mesmo domínio** `crm.akeel.com.br`. **Pendente com a TI:** cadastrar `https://crm.akeel.com.br/` (exato) como *redirect* e *post-logout redirect* no `crm-bff`, pois é o destino do convite e do logout | Akeel (TI) | IAM (stories 0-09, 0-19, 0-20) |
+| P-19 | ~~**Onde vivem os papéis.**~~ **Decidida em 24/11 (Pedro): o CRM manda (D-09).** Conjuntos de permissões e grupos de visibilidade ficam no CRM. O CRM sincroniza o grupo `/Perfis/*` no Keycloak pela Admin API ao convidar e ao mudar o papel. Os claims `roles` e `groups` não autorizam nada no CRM. Falta definir como os conjuntos de permissões se mapeiam nos 4 perfis | Pedro (mapeamento) | IAM, USR (Onda 1) |
 
 ### 14.2 Sessões de estudo do Pipedrive a produzir
 

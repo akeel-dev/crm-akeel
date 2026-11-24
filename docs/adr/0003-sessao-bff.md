@@ -1,8 +1,175 @@
 # ADR 0003 — A sessão da BFF, com os tokens, fica no PostgreSQL pelo Spring Session JDBC
 
-Dono: Arquiteto. Data: 2026-11-24. Estado: aceito pelo humano em 2026-11-24 (planning/decisoes/2026-11-24.md §11)
+Dono: Arquiteto. Data: 2026-11-24. Estado: aceito pelo humano em 2026-11-24 (planning/decisoes/2026-11-24.md §11); emendas de 2026-11-24 (§14 e §15)
 
 Responde a **Q-ARQ-2** da Onda 0 (trava a story 0-09).
+
+**Emenda de 2026-11-24 (P-18, `planning/decisoes/2026-11-24.md §14`; spec v1.2, §5.1):**
+
+1. **O BFF foi mantido.** O login usa o cliente **confidencial `crm-bff`**, que a TI
+   ainda vai criar (Authorization Code + PKCE `S256`). O nome é provisório: o
+   `client-id` vem de configuração (`KEYCLOAK_CLIENT_ID`) e o segredo do arquivo de
+   segredos do Docker (RF-SEC-03); nenhum dos dois é literal no código. O `crm-web`
+   público não é usado para login. Até a TI criar o cliente, a Onda 0 roda contra o
+   realm de teste `crm`, que já traz um `crm-bff` confidencial.
+2. **O access token dura 5 min; a renovação acontece no servidor**, nunca no navegador:
+   - um `OAuth2AuthorizedClientManager` (`DefaultOAuth2AuthorizedClientManager`) com
+     `OAuth2AuthorizedClientProviderBuilder.builder().authorizationCode().refreshToken()`,
+     ligado ao `HttpSessionOAuth2AuthorizedClientRepository` da decisão 2. O provider
+     de refresh renova quando faltar menos que o `clockSkew` (padrão 60 s) para o
+     access token vencer, e o gerenciador grava o cliente renovado **na sessão**, ou
+     seja, no banco: a outra instância já lê o token novo;
+   - quem chama o gerenciador é um filtro do módulo `identity` em toda requisição
+     autenticada a `/api/**`. Sem isso nada renova, porque a autenticação da sessão
+     não expira junto com o access token;
+   - **se o refresh falhar com `invalid_grant`** (usuário desativado, sessão encerrada
+     no Keycloak, refresh token vencido), o handler padrão remove o cliente
+     autorizado, e o filtro invalida a sessão e responde 401. Isso amarra a sessão do
+     CRM à do Keycloak e faz valer a RF-IAM-04 ("encerra as sessões ativas");
+   - o escopo continua `openid` (com `email` e `profile`), **sem `offline_access`**,
+     que é um dos gatilhos de cifra abaixo.
+3. **A decisão sobre a cifra dos tokens não muda** (decisão 6 e o quadro "Decidido
+   pelo Pedro"): o refresh token na sessão continua inútil sem o segredo do `crm-bff`.
+   Trocar o cliente não aciona nenhum gatilho.
+
+**Premissas sobre o realm, que a TI configura e o CRM não controla** (confirmadas pela
+TI em 2026-11-24, §15: Idle 8 h, Max 30 dias, Revoke Refresh Token desligado; ⚠️ informado,
+não conferível daqui, porque o discovery não expõe esses valores):
+- **SSO Session Idle ≥ 8 h e SSO Session Max ≥ 30 dias** no realm `crm`. O refresh
+  token do Keycloak vence com a sessão SSO; com o padrão do Keycloak (30 min de
+  inatividade), o CRM deslogaria após 30 min parado, não 8 h. A ociosidade real da
+  sessão é o menor dos dois valores.
+- **"Revoke Refresh Token" desligado** (padrão do Keycloak). Ligado, duas requisições
+  simultâneas da mesma sessão renovariam com o mesmo refresh token e a segunda
+  derrubaria a sessão. Se a TI precisar ligá-lo, a renovação passa a ser serializada
+  por sessão (custo: um lock por id de sessão no `identity`).
+
+**Guardado por** (acréscimo à tabela abaixo; teste de integração do QA, em
+`comandos.suite`, com Keycloak de Testcontainers e o realm de teste `crm`, dois
+contextos `api`; o tempo é avançado por um `Clock` injetado no provider de refresh,
+não por espera):
+
+| Regra | Teste que fica vermelho |
+|---|---|
+| Renovação no servidor, gravada na sessão | Sessão criada em A; relógio além do `expiresAt` do access token; `GET /api/session` em B → 200, e o cliente autorizado lido da sessão tem access token **diferente** do original e `expiresAt` no futuro. Sabotagem: tirar `.refreshToken()` do builder (ou o filtro) deixa vermelho |
+| Falha do refresh derruba a sessão | Usuário desativado (ou sessão encerrada) pela Admin API do Keycloak de teste; relógio além do vencimento; a próxima requisição → 401 e a linha some de `SPRING_SESSION`. Gêmeo por presença: sem desativar, 200 |
+| Nenhum token no navegador durante a renovação | O inspetor do critério 2 da 0-09 aplicado às respostas da renovação acusa zero `access_token`/`refresh_token`/JWT |
+| `client-id` de configuração | Contexto sobe com `KEYCLOAK_CLIENT_ID=crm-bff` e o login passa; com outro valor, falha. `backend/src/main/**` não contém o literal `"crm-bff"` |
+
+**Emenda de 2026-11-24 (Keycloak entregue pela TI, `planning/decisoes/2026-11-24.md §15`):**
+
+A TI criou o `crm-bff` (confidencial, PKCE `S256`, redirect
+`https://crm.akeel.com.br/login/oauth2/code/keycloak`) e o `crm-bff-dev` (qualquer caminho em
+`localhost:8080`, `5173` e `3000`), no Keycloak 26.8.2. O Pedro disse que a configuração
+do realm é ponto de partida: o time pode pedir mudanças. Evidência conferida em 2026-11-24:
+
+| Fato | Evidência |
+|---|---|
+| O redirect padrão do login é `{baseUrl}/login/oauth2/code/{registrationId}`; o endpoint de redirecionamento é `/login/oauth2/code/*` | docs.spring.io/spring-security/reference/servlet/oauth2/login/core.html e …/login/advanced.html (Spring Security 7.2.0) |
+| O início do login é `/oauth2/authorization/{registrationId}` (`OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI`) | …/login/advanced.html (7.2.0) |
+| **OIDC Back-Channel Logout existe:** `.oidcLogout(o -> o.backChannel(...))` abre `POST /logout/connect/back-channel/{registrationId}`, valida assinatura e claims do `logout_token` e encerra a sessão do `sid` (ou todas as do `sub`) | …/login/logout.html (7.2.0), "OpenID Connect 1.0 Back-Channel Logout" |
+| O vínculo `sid` → sessão do cliente fica num `OidcSessionRegistry`, **em memória por padrão** (`InMemoryOidcSessionRegistry` em `OidcSessionRegistryAuthenticationStrategy`) | idem, "Customizing the OIDC Provider Session Registry"; código de `OAuth2LoginConfigurer` na tag `7.2.0` |
+| Para encerrar, o handler faz uma **chamada HTTP interna** a `logoutUri` (padrão `{baseUrl}/logout/connect/back-channel/{registrationId}`) com o cookie `JSESSIONID=<id cru da sessão>` | `OidcBackChannelLogoutHandler.java`, tag `7.2.0` (`eachLogout`, `computeLogoutEndpoint`) |
+| O cookie do Spring Session se chama `SESSION` e leva o id **em Base64** (`useBase64Encoding = true`) | `DefaultCookieSerializer.java`, spring-session tag `4.2.0`, linha 84; a doc do Spring Security manda trocar o nome para `SESSION`, mas não fala do Base64 |
+| O realm anuncia `backchannel_logout_supported: true` e `backchannel_logout_session_supported: true`; issuer `https://akpannel.akeel.com.br/realms/crm` | `GET https://akpannel.akeel.com.br/realms/crm/.well-known/openid-configuration`, executado em 2026-11-24 |
+| O `OidcClientInitiatedLogoutSuccessHandler` redireciona ao `end_session` por `GET` (o `id_token_hint` vai na URL); com `FormPostRedirectStrategy`, vai por `POST` de formulário | …/login/logout.html (7.2.0) |
+| No Boot 4.2, os cabeçalhos `X-Forwarded-*` só valem com `server.request.header.forwarded.strategy` (sem valor, é deduzido da plataforma de nuvem; numa VPS, nenhuma) | docs.spring.io/spring-boot/appendix/application-properties/index.html (4.2.0) |
+| Para SPA, o Spring Security 7.2 tem `csrf.spa()` (token em cookie legível + tratamento do BREACH) | docs.spring.io/spring-security/reference/servlet/exploits/csrf.html (7.2.0), "Single-Page Applications" |
+
+1. **O callback fica `/login/oauth2/code/keycloak`.** É o padrão do Spring com o
+   `registrationId` **`keycloak`** (`spring.security.oauth2.client.registration.keycloak.*`),
+   sem `redirect-uri` customizado. O `registrationId` é o nome do provedor, não o
+   `client_id`: o mesmo caminho serve ao `crm-bff` e ao `crm-bff-dev`, e trocar de cliente
+   não muda a URL cadastrada. O `redirect_uri` é montado com `{baseUrl}`, então, atrás do
+   Tunnel e do proxy reverso, a `api` precisa ver o host e o esquema originais:
+   `server.request.header.forwarded.strategy=native`, e o proxy repassa `Host` e
+   `X-Forwarded-Proto: https`. Sem isso, o Spring monta `http://…` e o Keycloak devolve 400.
+   **Pedido à TI:** cadastrar também `https://crm.akeel.com.br/` (exato, sem curinga), que é o
+   `redirect_uri` do convite e o `post_logout_redirect_uri` do logout. Hoje só o callback está
+   cadastrado, e um redirect fora da lista devolve 400.
+2. **Back-channel logout: existe no Spring, mas não liga na v1. A TI deixa a "Backchannel
+   logout URL" (e a de front-channel) do `crm-bff` vazia.** Motivo: ligado com os padrões, ele
+   **falha em silêncio** no nosso desenho, por três razões conferidas acima:
+   - o registro `sid` → sessão fica na memória de uma instância, e com duas `api` o
+     `logout_token` cai na outra (e todo deploy o apaga);
+   - a chamada interna manda `JSESSIONID=<id cru>`, e o nosso cookie é `SESSION` em Base64;
+   - com `{baseUrl}`, a chamada interna sairia pela internet e voltaria pelo Cloudflare.
+
+   O que a spec exige já está coberto sem ele:
+   - **RF-IAM-04** (desativar no CRM "encerra as sessões ativas") parte do CRM, que apaga as
+     próprias sessões (`FindByIndexNameSessionRepository.findByPrincipalName`, com o nome do
+     principal = `sub`, o padrão para OIDC) e encerra as do Keycloak pela Admin API. Fica
+     para a Onda 1;
+   - uma sessão encerrada **no Keycloak** (pelo console da TI, por usuário desativado lá, por
+     expiração) derruba a do CRM na primeira requisição a `/api/**` depois que o access token
+     vence: o refresh falha com `invalid_grant` (emenda P-18, item 2). A janela é **≤ 5 min**,
+     a vida do access token.
+
+   **Se o gatilho vier** (ver alternativas): caminho
+   `https://crm.akeel.com.br/logout/connect/back-channel/keycloak`; `oidcLogout().backChannel()`
+   com um `OidcSessionRegistry` em tabela do PostgreSQL (uma classe + migração),
+   `setSessionCookieName("SESSION")`, cookie do Spring Session sem Base64
+   (`DefaultCookieSerializerCustomizer`) ou handler próprio que apaga a linha de
+   `SPRING_SESSION` direto, e `logoutUri` apontando para a própria instância
+   (`http://localhost:8080/…`), não para `{baseUrl}`. Efeito na sessão JDBC: a linha da sessão
+   do `sid` some de `SPRING_SESSION`, e o cookie passa a dar 401 em qualquer instância.
+   **Alcance pelo Cloudflare:** o Keycloak chama o endpoint de fora, sem navegador, como os
+   webhooks da §4.5. Ele chega se o caminho não estiver atrás do Cloudflare Access (o Keycloak
+   não manda o token de serviço do Access) nem de desafio de bot. A spec já põe a SPA e a API
+   fora do Access (§4.5, "Endpoints públicos").
+3. **A SPA e a BFF ficam no mesmo host, `crm.akeel.com.br`, atrás do mesmo proxy.** O proxy
+   manda para a `api` só `/api/`, `/oauth2/authorization/`, `/login/oauth2/code/` e `/logout`;
+   o resto vai para os estáticos da SPA (a SPA não usa esses prefixos como rota). Motivos:
+   - **cookie:** a sessão fica *host-only* (sem `Domain`), não vaza para outros hosts de
+     `akeel.com.br` (o `akpannel` inclusive), e o `SameSite=Lax` não depende de nenhuma
+     regra de site;
+   - **CSRF:** o cookie do token (`csrf.spa()`) é lido pela SPA no mesmo host. Com
+     subdomínios, ele precisaria de `Domain=.akeel.com.br`, legível e gravável por qualquer
+     subdomínio;
+   - **CORS:** nenhum. Com subdomínios, toda escrita (JSON com cabeçalho CSRF) faria preflight,
+     com `Allow-Credentials` e uma lista de origens para manter;
+   - **D-06:** um hostname, uma regra de ingresso no Tunnel, um conjunto de regras de WAF;
+   - já é o que o convite (`redirect_uri=https://crm.akeel.com.br/`), o callback cadastrado e o
+     proxy do Vite da 0-19 (crit. 8, mesma origem em dev) supõem.
+4. **Desenvolvimento usa o `crm-bff-dev`.** `KEYCLOAK_CLIENT_ID=crm-bff-dev`, e o segredo vem
+   da variável de ambiente **`KEYCLOAK_CLIENT_SECRET`**
+   (`spring.security.oauth2.client.registration.keycloak.client-secret=${KEYCLOAK_CLIENT_SECRET}`,
+   sem valor padrão), exportada na shell de quem desenvolve, **nunca** de arquivo versionado
+   (nem `.env` no repositório, nem `application-*.yml`). Em produção, o mesmo nome chega pelo
+   arquivo de segredos do Docker (RF-SEC-03; ex.: `spring.config.import=configtree:/run/secrets/`
+   com o arquivo `KEYCLOAK_CLIENT_SECRET`), com o `crm-bff`. O callback de dev é
+   `http://localhost:5173/login/oauth2/code/keycloak`, pelo proxy do Vite, que mantém o `Host`.
+   O teste usa o realm de teste do Testcontainers, com segredo próprio e falso.
+5. **Exceção do `id_token_hint`, aceita pelo Pedro (§15).** O único token que passa pelo
+   navegador é o ID token, no `Location` do redirecionamento ao `end_session` (0-09, crit. 2),
+   emitido **depois** de a sessão do servidor ser invalidada. Por que se aceita:
+   - ele não abre nada no CRM. A BFF não aceita Bearer (0-09, crit. 6), e a futura API
+     pública exige `aud` com `crm-api`, que um ID token do `crm-bff` não tem;
+   - sem ele, o Keycloak pede confirmação de logout.
+
+   O que fica exposto: nome e e-mail do usuário (claims do ID token) numa URL, que pode cair
+   no histórico do navegador e em log de acesso. A alternativa mais barata, se isso incomodar,
+   está nas alternativas abaixo.
+
+**Alternativas desta emenda:**
+
+| Alternativa | Por que não agora | Gatilho que a faria valer |
+|---|---|---|
+| **Back-channel logout ligado** (registro em tabela, cookie sem Base64, `logoutUri` local; o desenho do item 2) | Uma classe, uma tabela e três armadilhas silenciosas, para encurtar uma janela que já é ≤ 5 min; a spec não pede propagação imediata de logout feito fora do CRM | A Akeel exigir que uma sessão encerrada **no Keycloak** derrube o CRM na hora; a TI subir a vida do access token (a janela cresce junto); ou outro aplicativo no realm `crm` com SSO compartilhado |
+| Back-channel com os padrões do Spring (sem registro em tabela) | Passa num teste de uma instância e falha em produção (duas `api`, deploy, cookie em Base64) | — (nunca: é a armadilha) |
+| SPA e BFF em subdomínios (`crm.` e `api.crm.`) | CORS com credenciais, cookie de CSRF com `Domain` largo, dois hostnames no Tunnel, sem ganho para ~50 usuários | A SPA sair da VPS (ex.: CDN/Pages) e o proxy único deixar de existir |
+| `id_token_hint` por `POST` (`FormPostRedirectStrategy`) | Tira o token da URL (histórico, logs), mas ele continua no corpo HTML; muda o inspetor do crit. 2 da 0-09 | Achado de pentest/ASVS (RF-SEC-07) ou log de proxy/Cloudflare guardando a query string |
+| Logout sem `id_token_hint` (só `client_id` + `post_logout_redirect_uri`) | O Keycloak mostra uma tela "deseja sair?" | O mesmo gatilho acima, se o POST não bastar |
+
+**Guardado por** (acréscimo à tabela da decisão; QA, em `comandos.suite`, salvo onde dito):
+
+| Regra | Teste que fica vermelho |
+|---|---|
+| Callback `/login/oauth2/code/keycloak` com o host público | `GET /oauth2/authorization/keycloak` com `X-Forwarded-Proto: https` e `X-Forwarded-Host: crm.akeel.com.br` vindos de IP de proxy confiável → o `Location` tem `redirect_uri=https://crm.akeel.com.br/login/oauth2/code/keycloak`. Sabotagem: sem `server.request.header.forwarded.strategy`, sai `http://` e fica vermelho |
+| Sessão encerrada no Keycloak derruba a do CRM em ≤ 5 min | Sessão do usuário encerrada pela Admin API do Keycloak de teste (`POST /users/{id}/logout`); **antes** de o access token vencer, `GET /api/session` → 200 (a janela existe, e o teste a enxerga); relógio além do vencimento → 401 e a linha some de `SPRING_SESSION` |
+| Back-channel não ligado pela metade | `ArchitectureTest` (`comandos.arquitetura`, quando nascer na Onda 0): nenhuma classe de `br.com.akeel.crm..` chama `OidcLogoutConfigurer.backChannel` nem depende de `OidcBackChannelLogoutHandler` ou `OidcSessionRegistry`. Gêmeo por presença: uma fixture que chama `.backChannel(...)` é acusada. Substituir esta emenda retira a regra |
+| Segredo só de ambiente | Contexto sem `KEYCLOAK_CLIENT_SECRET` não sobe (sem valor padrão); `backend/src/main/**` e `backend/src/main/resources/**` não têm `client-secret:` com valor literal. Gêmeo: um `client-secret: abc` plantado é acusado |
+| Mesmo host em produção | DevOps, teste de fumaça em homologação: `GET https://<host>/oauth2/authorization/keycloak` responde 302 ao `akpannel` com `redirect_uri` no mesmo host; `GET https://<host>/` devolve o `index.html` da SPA |
 
 ## Contexto
 
@@ -107,3 +274,16 @@ da autoconfiguração, sem import no nosso código, então só o teste de compor
 - Os atributos são serializados em Java. Uma atualização do Spring Security pode
   tornar sessões antigas ilegíveis; não conferi como o Spring Session reage (relogar
   é aceitável, erro 500 não). Verificar na primeira atualização de versão menor.
+- **Emenda §15:**
+  - Nenhuma mudança em `time.yml`.
+  - Dev (0-09): `registrationId` `keycloak`, `server.request.header.forwarded.strategy=native`,
+    `client-secret` de `${KEYCLOAK_CLIENT_SECRET}` e nada de `oidcLogout().backChannel()`.
+  - DevOps: um host só (`crm.akeel.com.br`); o proxy roteia os quatro prefixos da BFF e
+    repassa `Host` e `X-Forwarded-Proto`; o segredo `KEYCLOAK_CLIENT_SECRET` como segredo
+    do Docker.
+  - QA (0-09): os quatro testes de comportamento da tabela da emenda.
+  - Arquiteto: a regra do `ArchitectureTest` quando ele nascer.
+  - Onda 1 (RF-IAM-04): encerrar sessões por `findByPrincipalName(sub)` e pela Admin API.
+  - Quem fizer o SSE (§4.2): uma conexão SSE aberta não passa pelo filtro de renovação a
+    cada evento. Ela precisa fechar quando a sessão some ou quando o access token vence,
+    senão escapa da janela de 5 min e do logout.

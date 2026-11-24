@@ -7,6 +7,39 @@ dois repositórios (decisão 2, que substitui o "um repositório só" da revisã
 mecanismo de backup sem acoplamento (decisão 6), a regra "o caminho mais específico
 vence" no bloco do `time.yml` e os comandos para dois repositórios.
 
+**Emenda de 2026-11-24 (realm próprio, `planning/decisoes/2026-11-24.md §12`):** o CRM
+não usa o realm `sed`. Muda só o nome do realm, na linha da D-07 e na nota de P-15;
+a decisão (Keycloak, BFF, o CRM como fonte de verdade dos papéis) não muda.
+
+**Acréscimo à emenda do realm, 2026-11-24 (realm real, `planning/decisoes/2026-11-24.md
+§13` e §14; spec v1.2, §5.1 e §5.2):**
+- **O realm real é `crm`, em `https://akpannel.akeel.com.br`, fora da VPS do CRM.**
+  Issuer `https://akpannel.akeel.com.br/realms/crm`. O nome continua vindo de
+  `KEYCLOAK_REALM` e a URL base de configuração; nada disso é literal no código.
+- **O Keycloak não é mais operado pelo CRM.** A instância, o banco dela, o backup, a
+  atualização de versão, o console de administração e a disponibilidade são da TI da
+  Akeel. Consequências neste ADR:
+  - **o `compose.yaml` de produção não sobe Keycloak.** O Keycloak continua só no
+    `compose.yaml` local e no Testcontainers, com uma exportação de realm de teste;
+  - **o backup da decisão 6 cobre só o PostgreSQL do CRM.** A linha "Keycloak: banco
+    do Keycloak incluído na mesma política" da §4.6 da spec, e o "console de
+    administração do Keycloak atrás do Cloudflare Access" da §4.5, descrevem algo que
+    o CRM não opera mais (achado para o Orquestrador: a spec é do Pedro);
+  - **a VPS fala com o Keycloak pela internet** (`api` → `akpannel.akeel.com.br`:
+    discovery, JWKS, token endpoint, Admin API). Login e renovação de sessão passam a
+    depender da disponibilidade de um serviço que não é nosso; o RTO da §4.6 não o
+    cobre;
+  - a versão `Keycloak 26.8.2` da tabela vale para o ambiente local e de teste. A
+    versão do akpannel é da TI e não foi conferida: o realm de teste deve seguir a
+    mesma série maior quando ela for informada.
+- **O realm local de teste passa a se chamar `crm`** (era `crm-akeel`), igual ao real,
+  com os clientes da §5.1 (`crm-bff` confidencial, `crm-web`, `crm-api`) e os grupos
+  `/Perfis/*`. O teste de "nenhum nome de realm fixo no código" (0-09, critério 12)
+  passa a procurar `"crm"` dentro de `/realms/`; um literal `"crm"` sozinho não é
+  sinal (é o pacote base), então a checagem é por `/realms/` e pelo issuer.
+- **A autorização do CRM não lê os claims `roles` e `groups`** (P-19, D-09). Regra e
+  teste em "Guardado por", linhas "P-19".
+
 ## Contexto
 
 Projeto novo, sem código. A spec v1.1 já decidiu a stack; este ADR registra o que
@@ -21,7 +54,7 @@ que isso implica para o time.
 | D-04 | React + TypeScript + Vite, SPA (TanStack Query/Router, Radix/shadcn, dnd-kit, react-hook-form + zod) | §2, §4.2 |
 | D-05 | PostgreSQL 17 ou superior; busca em `pg_trgm` + `unaccent` + `tsvector` `portuguese`, sem Elasticsearch | §2, §4.2 |
 | D-06 | VPS Hostinger no Brasil, atrás do Cloudflare (DNS, proxy, Tunnel, Access); tudo em Docker Compose | §2, §4.1, §4.5 |
-| D-07 | Keycloak, realm `sed`, padrão BFF (tokens só no servidor, cookie `HttpOnly`); o CRM é a fonte de verdade de papéis (D-09) | §2, §5.1 |
+| D-07 | Keycloak, realm `sed`, padrão BFF (tokens só no servidor, cookie `HttpOnly`); o CRM é a fonte de verdade de papéis (D-09). **Emenda 2026-11-24:** o realm é **próprio**, não o `sed` (`decisoes/2026-11-24.md §12`); o nome vem de `KEYCLOAK_REALM`, e o realm local de teste se chama `crm-akeel`. Isso contraria o texto da D-07 (e da §5.1): **o Pedro precisa atualizar a spec**. **Acréscimo 2026-11-24 (§13):** spec v1.2 atualizada; realm `crm` em `https://akpannel.akeel.com.br`, fora da VPS e operado pela TI; o realm local de teste passa a se chamar `crm` | §2, §5.1 |
 | D-22 | warpdrive (MIT) é referência de modelo, regras e código de front reaproveitável (com aviso de copyright); **o backend dele não é usado** | §2, §3.1 |
 
 E da §4.2, sem número D-xx mas escrito na spec: Spring Modulith (fronteiras e
@@ -165,7 +198,7 @@ infraestrutura.
    R2 também não tem versionamento. O CRM não depende de nenhum dos dois.
 6. **Backup: mecanismo neutro, destino por variável de ambiente** (§7: o destino
    está em aberto e não pode haver acoplamento forte).
-   - **PostgreSQL (CRM e Keycloak): pgBackRest** com repositório `s3`
+   - **PostgreSQL (CRM; o do Keycloak saiu pela emenda de §13, é da TI): pgBackRest** com repositório `s3`
      (`repo1-s3-endpoint`, `repo1-s3-bucket`, `repo1-s3-region`,
      `repo1-s3-uri-style`, opções conferidas em pgbackrest.org/configuration.html
      em 2026-11-24), cifrado no cliente (`repo1-cipher-type=aes-256-cbc`), backup
@@ -234,9 +267,18 @@ Os testes nascem na Onda 0; aqui só a proposta. Todos rodam em `comandos.arquit
 | D-22 (backend do warpdrive não entra) | Sem asserção possível além da stack: o warpdrive é TypeScript e o backend é Java. O aviso de copyright do código de front copiado é verificação do Revisor |
 | Java 25 / Spring Boot 4 | `maven-enforcer-plugin` com `requireJavaVersion [25,)` e o `parent` em `spring-boot-starter-parent` 4.2.x: o build falha antes dos testes |
 | PostgreSQL 17+ (D-05) | Teste de integração (suíte, não arquitetura) que lê `server_version_num` do contêiner e exige `>= 170000` |
+| **P-19** (D-09): só `identity` lê claims do token | `ArchitectureTest`: nenhuma classe fora de `br.com.akeel.crm.identity..` chama métodos de `org.springframework.security.oauth2.core.ClaimAccessor` (`getClaim*`, `getClaims`; cobre `Jwt`, `OidcIdToken`, `OidcUserInfo`), `OidcUser.getClaims/getIdToken/getUserInfo` nem `OAuth2AuthenticatedPrincipal.getAttribute(s)`; e nenhuma classe fora de `identity..` depende de `JwtGrantedAuthoritiesConverter` nem de `GrantedAuthoritiesMapper`. Gêmeo por presença: uma classe de fixture fora de `identity` que chama `jwt.getClaimAsStringList("roles")` é acusada |
+| **P-19** dentro de `identity` | ArchUnit não vê o argumento `"roles"`, então dentro do módulo a garantia é de comportamento (QA, IAM): usuário com papel `vendedor` no CRM e token com `roles=[admin]` e `groups=[/Perfis/Administradores]` recebe 403 numa rota de administrador; o inverso (papel `admin` no CRM, token sem `roles`) recebe 200. Nasce na Onda 1, quando existirem `app_user` e papéis |
 
 D-06 e D-07 são de infraestrutura e configuração: guardados pelo DevOps (deploy) e
 pelos testes de IAM da Onda 0, não por teste de arquitetura.
+
+**Por que a regra de P-19 é de dependência e não de texto:** quem lê `roles` precisa
+de um acessor de claims; restringi-lo a `identity` deixa um só módulo a revisar. O
+`access` (conjuntos de permissões e visibilidade) decide pelo banco, nunca pelo token.
+Alternativa mais barata considerada: só o teste de comportamento, sem regra no
+`ArchitectureTest`. Não basta, porque ele prova uma rota, não todas; a regra cobre
+o resto do código pelo custo de uma asserção.
 
 ## Consequências para o time
 
@@ -293,7 +335,7 @@ Notas sobre a proposta:
 - **`pre_requisito` rodado em 2026-11-24 (revisão 2), parte a parte:** clones
   ausentes (`backend/` e `frontend/` não existem), `docker=0`, `java=1` (17.0.12),
   `node=0` (v23.11.0).
-- O `compose.yaml` da raiz sobe PostgreSQL, Keycloak, Garage, Gotenberg e Mailpit
+- O `compose.yaml` da raiz sobe PostgreSQL, Keycloak (só local, realm de teste `crm`; emenda de §13), Garage, Gotenberg e Mailpit
   para o ambiente local, e o Garage de teste do backup (DevOps).
 - O Garage não tem módulo pronto no Testcontainers: o teste de `platform.storage`
   sobe `dxflrs/garage` como contêiner genérico e roda `layout assign`/`key
@@ -306,6 +348,17 @@ Notas sobre a proposta:
   exportação de realm `sed` de teste. Como o CRM é a fonte de verdade dos papéis
   (D-09), não dependemos de papéis do realm. Até P-15 fechar, a Onda 0 escreve IAM
   contra um realm local.
+  **Emenda 2026-11-24:** P-15 respondida em `decisoes/2026-11-24.md §12`: o realm é
+  próprio do CRM, com nome real ainda a definir pelo Pedro. Até lá o nome vem de
+  `KEYCLOAK_REALM` (sem valor fixo no código), e o realm local de teste, exportado
+  para o `compose.yaml`, se chama `crm-akeel`. Como a D-07 da spec ainda diz `sed`,
+  o Pedro precisa atualizá-la (e a §5.1). O texto acima fica como registro do que
+  se supunha antes da resposta.
+  **Acréscimo 2026-11-24 (`decisoes/2026-11-24.md §13`):** a P-15 fechou de vez. O
+  realm é `crm`, em `https://akpannel.akeel.com.br`, operado pela TI; a suposição
+  acima ("a instância provavelmente não é nossa") se confirmou. O `compose.yaml`
+  sobe Keycloak só no ambiente local, com o realm de teste `crm` (não mais
+  `crm-akeel`); o de produção não sobe Keycloak.
 - **P-07 (fim do Pipedrive).** Não muda a stack. Foi por ela que escolhi as opções
   de menor configuração (db-scheduler, Garage em nó único) e deixei a saída de disco
   local registrada acima.
