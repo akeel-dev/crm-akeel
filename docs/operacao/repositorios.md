@@ -45,7 +45,7 @@ O endereço de cada remoto entra nesta página quando for criado (pendência da 
 
 ```
 test -d backend/.git && test -d frontend/.git \
-  && git check-ignore -q backend frontend \
+  && git check-ignore -q backend && git check-ignore -q frontend \
   && test -z "$(git status --porcelain -- backend frontend)" \
   && git -C backend log --oneline -1 && git -C frontend log --oneline -1
 ```
