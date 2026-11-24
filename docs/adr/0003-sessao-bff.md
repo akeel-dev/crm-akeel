@@ -1,6 +1,6 @@
 # ADR 0003 — A sessão da BFF, com os tokens, fica no PostgreSQL pelo Spring Session JDBC
 
-Dono: Arquiteto. Data: 2026-11-24. Estado: aceito pelo humano em 2026-11-24 (planning/decisoes/2026-11-24.md §11); emendas de 2026-11-24 (§14, §15 e a correção do valor de `forwarded.strategy`)
+Dono: Arquiteto. Data: 2026-11-24. Estado: aceito pelo humano em 2026-11-24 (planning/decisoes/2026-11-24.md §11); emendas de 2026-11-24 (§14, §15, a correção do valor de `forwarded.strategy` e o handler do CSRF, §22)
 
 Responde a **Q-ARQ-2** da Onda 0 (trava a story 0-09).
 
@@ -124,7 +124,7 @@ do realm é ponto de partida: o time pode pedir mudanças. Evidência conferida 
    - **cookie:** a sessão fica *host-only* (sem `Domain`), não vaza para outros hosts de
      `akeel.com.br` (o `akpannel` inclusive), e o `SameSite=Lax` não depende de nenhuma
      regra de site;
-   - **CSRF:** o cookie do token (`csrf.spa()`) é lido pela SPA no mesmo host. Com
+   - **CSRF:** o cookie do token (modo simples, não `csrf.spa()`: ver a emenda do handler do CSRF, §22) é lido pela SPA no mesmo host. Com
      subdomínios, ele precisaria de `Domain=.akeel.com.br`, legível e gravável por qualquer
      subdomínio;
    - **CORS:** nenhum. Com subdomínios, toda escrita (JSON com cabeçalho CSRF) faria preflight,
@@ -206,6 +206,34 @@ valor, e não mudam. A story 0-09 cita `native` em quatro lugares; a troca lá �
 | Back-channel não ligado pela metade | `ArchitectureTest` (`comandos.arquitetura`, quando nascer na Onda 0): nenhuma classe de `br.com.akeel.crm..` chama `OidcLogoutConfigurer.backChannel` nem depende de `OidcBackChannelLogoutHandler` ou `OidcSessionRegistry`. Gêmeo por presença: uma fixture que chama `.backChannel(...)` é acusada. Substituir esta emenda retira a regra |
 | Segredo só de ambiente | Contexto sem `KEYCLOAK_CLIENT_SECRET` não sobe (sem valor padrão); `backend/src/main/**` e `backend/src/main/resources/**` não têm `client-secret:` com valor literal. Gêmeo: um `client-secret: abc` plantado é acusado |
 | Mesmo host em produção | DevOps, teste de fumaça em homologação: `GET https://<host>/oauth2/authorization/keycloak` responde 302 ao `akpannel` com `redirect_uri` no mesmo host; `GET https://<host>/` devolve o `index.html` da SPA |
+
+**Emenda de 2026-11-24 (handler do CSRF; `planning/decisoes/2026-11-24.md §22`; `reviews/0-19.md`, N2):**
+
+O item 3 da emenda §14 diz "o cookie do token (`csrf.spa()`)". **Não é o que roda.** O backend
+(commit `ad9b009`) usa o modo simples, e o Pedro aceitou assim na §22:
+
+| Fato | Evidência |
+|---|---|
+| Repositório: `CookieCsrfTokenRepository.withHttpOnlyFalse()` (cookie `XSRF-TOKEN` legível pela SPA; cabeçalho `X-XSRF-TOKEN`) | ✅ leitura: `backend/src/main/java/br/com/akeel/crm/identity/SecurityConfig.java`, linhas 85 a 87 |
+| Handler: `CsrfTokenRequestAttributeHandler` simples, com `setCsrfRequestAttributeName(null)` (o token é carregado em toda requisição, e o cookie sai sem esperar alguém ler o atributo); **sem** `XorCsrfTokenRequestAttributeHandler` nem `csrf.spa()` | ✅ leitura: mesmo arquivo, linhas 66, 67 e 87 |
+| O sair é `POST /logout` de formulário com o token **cru** no campo `_csrf` (0-19, crit. 5). Com `csrf.spa()`, parâmetro de formulário passa pelo handler XOR, e o token cru daria 403 | ⚠️ inferido do código do Spring Security (`SpaCsrfTokenRequestHandler.resolveCsrfTokenValue`: cabeçalho → simples, senão → XOR), `reviews/0-19.md` N2; não rodado. Quem prova o sair contra o backend real é a 0-20 |
+
+**Risco aceito (§22):** sem a máscara XOR, o valor do token é o mesmo em toda resposta, e o
+BREACH (compressão + texto escolhido refletido no mesmo corpo) poderia extraí-lo. Aceito porque
+o token **nunca vai em HTML nem em corpo de resposta**: só no cookie e no cabeçalho/campo que a
+SPA envia. O `SameSite=Lax` da sessão é uma segunda barreira.
+
+**Não "alinhar" o backend ao texto antigo:** trocar para `csrf.spa()` quebra o sair sem que
+nenhum teste do front acuse (o front testa contra dublê). Quem trocar o handler troca junto o
+`_csrf` do formulário de sair.
+
+**Gatilho para rever** (passar para `csrf.spa()` ou XOR, e mandar o `_csrf` mascarado ou sair
+por `fetch` com cabeçalho): o token passar a ir em HTML ou em qualquer corpo de resposta (ex.:
+página renderizada no servidor, endpoint que devolve o token); ou achado de pentest/ASVS
+(RF-SEC-07) sobre CSRF/BREACH.
+
+Alternativa mais barata considerada: nenhuma; o modo simples já é o mais barato, e a cara
+(`spa()`) só vale com o gatilho acima.
 
 ## Contexto
 
