@@ -1,0 +1,40 @@
+# time.yml — os fatos estruturados do time neste projeto.
+# Dono: o humano. O Orquestrador propõe mudanças; o humano escreve ou autoriza.
+# Todo agente lê este arquivo antes de escrever qualquer coisa.
+
+projeto: crm-akeel
+metodo: time-padrao 0.1.0
+modo: leve                    # leve | completo
+# Códigos de módulo da spec (§3.1). Confirmado pelo Pedro em 2026-11-24
+# (planning/decisoes/2026-11-24.md §5 e §6).
+rigor_completo_em: [IAM, USR, TRS, MIG, API, WPP, BIL, LGPD]
+
+idioma:
+  prosa: pt-BR
+  codigo: en
+
+# A spec é do humano. Nenhum papel a edita.
+spec: especificacao-crm-akeel-v1.1.md   # + o estudo em pipedrive/, que a spec cita
+
+comandos:
+  pre_requisito: ""           # ex.: "docker info" — sem ele, a suíte é inexecutável, não vermelha
+  suite: ""                   # ex.: "./mvnw -B test"
+  teste_unico: ""             # ex.: "./mvnw -B test -Dtest={classe}"
+  arquitetura: ""             # ex.: "./mvnw -B test -Dtest=ModularityTest"
+
+# Onde cada papel escreve. Um caminho tem um dono só.
+# Até o ADR da stack, src/ não tem dono: ninguém escreve código antes dele.
+escrita:
+  orquestrador: [CLAUDE.md, ESTADO.md, COLHEITA.md, planning/FILA.md, planning/roteiro.md, planning/decisoes/**, planning/arquivo/**]
+  planejador: [planning/ondas/**, planning/stories/**]
+  arquiteto: [docs/adr/**, docs/arquitetura/**, SISTEMA.md]   # + o teste de arquitetura, quando existir
+  qa: []                      # ex.: [src/test/**]
+  dev: []                     # ex.: [src/main/**]
+  revisor: [reviews/**]
+  devops: [deploy/**, docs/operacao/**, .github/**, Dockerfile, compose.yaml, .gitignore]
+  todos: [conflitos/**]       # qualquer papel abre conflito
+  humano: [especificacao-crm-akeel-v1.1.md, pipedrive/**, TIME.md, time.yml, .claude/**]
+
+limites:
+  fila_linhas: 300
+  estado_linhas: 150

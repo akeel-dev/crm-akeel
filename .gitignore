@@ -1,0 +1,6 @@
+.DS_Store
+
+# time-padrao
+.archify/
+.claude/worktrees/
+.claude/settings.local.json
