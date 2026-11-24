@@ -15,11 +15,22 @@ name: crm-akeel
 
 services:
   postgres:
-    image: postgres:18.7
+    image: crm-akeel/postgres:18.7-pgbackrest-2.60.1
+    build:
+      context: ./deploy
+      dockerfile: postgres/Dockerfile
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=crm-pgbackrest archive-push %p
+      - -c
+      - archive_timeout=300
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
-    secrets: [postgres_password, crm_db_password, keycloak_db_password]
+    secrets: [postgres_password, crm_db_password, keycloak_db_password, backup]
     volumes:
       - postgres-data:/var/lib/postgresql
       - ./deploy/local/postgres/10-bancos.sh:/docker-entrypoint-initdb.d/10-bancos.sh:ro
@@ -102,6 +113,50 @@ services:
       timeout: 3s
       retries: 30
 
+  backup-arquivos:
+    image: rclone/rclone:1.76.0
+    profiles: [backup]
+    entrypoint: ["sh", "/opt/crm/backup/arquivos.sh"]
+    environment:
+      ORIGEM_S3_ENDPOINT: http://garage:3900
+      ORIGEM_S3_REGION: garage
+      ORIGEM_S3_BUCKET: ${S3_BUCKET:?defina S3_BUCKET no .env}
+    secrets: [garage_s3_access_key_id, garage_s3_secret_access_key, backup]
+    volumes:
+      - ./deploy/backup:/opt/crm/backup:ro
+    depends_on:
+      garage-init:
+        condition: service_healthy
+
+  garage-destino:
+    image: dxflrs/garage:v2.5.0
+    profiles: [backup-teste]
+    secrets: [garage_rpc_secret, garage_admin_token]
+    volumes:
+      - ./deploy/backup/teste/garage-destino.toml:/etc/garage.toml:ro
+      - garage-destino-meta:/var/lib/garage/meta
+      - garage-destino-data:/var/lib/garage/data
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  backup-destino:
+    image: caddy:2.11.9-alpine
+    profiles: [backup-teste]
+    volumes:
+      - ./deploy/backup/teste/Caddyfile:/etc/caddy/Caddyfile:ro
+      - backup-destino-caddy:/data
+    depends_on:
+      garage-destino:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "test", "-s", "/data/caddy/pki/authorities/local/root.crt"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
   mailpit:
     image: axllent/mailpit:v1.34.0
     ports:
@@ -136,8 +191,13 @@ secrets:
     file: ./deploy/local/secrets/garage_s3_access_key_id
   garage_s3_secret_access_key:
     file: ./deploy/local/secrets/garage_s3_secret_access_key
+  backup:
+    file: ${BACKUP_SEGREDOS:-./deploy/backup/sem-destino}
 
 volumes:
   postgres-data:
   garage-meta:
   garage-data:
+  garage-destino-meta:
+  garage-destino-data:
+  backup-destino-caddy:

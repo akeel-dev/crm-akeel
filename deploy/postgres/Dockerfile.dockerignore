@@ -1,0 +1,4 @@
+*
+!postgres/pgbackrest.conf
+!backup/destino.sh
+!backup/pgbackrest.sh
