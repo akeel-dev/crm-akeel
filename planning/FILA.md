@@ -38,7 +38,8 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 **Com o Pedro:** (1) perguntar à TI se a conta `crm-api` do realm real consegue chamar a Admin API (o token precisa da audiência do escopo `kc-admin-api`); (2) **revogar o token antigo do GitHub** (o novo, com `repo` + `workflow` + `write:packages`, já está em uso; o antigo ainda responde 200).
 
-**Para a COLHEITA:** dois agentes rodando `npm ci` no mesmo `frontend/node_modules` se atropelam (reviews/0-15.md). Não paralelizar a suíte do frontend.
+**Para a COLHEITA:** o Revisor da 0-17 rodou sabotagens no `frontend/` real quando o clone sumiu (ficou em HEAD destacado; desfeito, sem perda). Sabotagem só em clone, e conferir o `cd` antes.
+**Também para a COLHEITA:** dois agentes rodando `npm ci` no mesmo `frontend/node_modules` se atropelam (reviews/0-15.md). Não paralelizar a suíte do frontend.
 
 ## 2026-11-24 (tarde) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -100,9 +101,11 @@ Respostas à TI no ADR 0003, emenda §15, e na spec P-18: callback
 | 0-15 | **fechada** · DevOps `5aa603f` · `reviews/0-15.md` sem bloqueantes · **CI verde no GitHub** (run 45459445549: suíte, lint, audit, build, imagem) | N1–N4 baixos (gatilho duplo em PR, imagens por tag, `EXPOSE` redundante, lint fora do "Como verificar") |
 | 0-06 | **fechada** · Arquiteto backend `27ecdcc` + raiz `5c6ba71` · Dev `516d5f1` · correções N1/N2/N4 `77a5ded` · remedido backend 20/20 | `reviews/0-06.md` sem bloqueantes; ADR 0001/SISTEMA.md ainda citam o padrão antigo `..platform..` (Arquiteto alinha depois da 0-03) |
 | 0-16 | **fechada** · QA `4aeffd1` + `287f1a6` · Dev `afc8659` + `c36e0c2` · remedido 62/62 · CI verde no GitHub (run 45461152294) | `reviews/0-16.md` sem bloqueantes |
-| 0-03 | DevOps em voo | — |
+| 0-03 | DevOps `80ddb50` · remedido: portabilidade exit 0, regressão 0-02 ok · backup + restore reais nos destinos A e B | Revisor em voo |
+| 0-08 | **fechada** · QA `427acf8` · Dev `f2f6a38` · remedido 27/27 · `reviews/0-08.md` sem bloqueantes | N1 (teste de estabilidade na mesma JVM é fraco), N4 (`/v3/api-docs` anônimo: decidir na 0-09), N5 (`cmp` do raiz vermelho até a 0-18) |
+| 0-09 | QA em voo (rigor completo, IAM) | — |
 | 0-07 | **fechada** · DevOps `d18f77d` · `reviews/0-07.md` sem bloqueantes · **CI verde no GitHub** (run 45462660612: suíte, Trivy, imagem) | N1 (média): a spec pede análise estática e a story não pediu (Planejador decide); N2–N5 baixos |
-| 0-17 | QA `5bbb4fb` vermelho certo (24 falhas por asserção/import) · Dev em voo | — |
+| 0-17 | **fechada** · QA `5bbb4fb` + `78b110b` · Dev `ec80562` + `2b172f9` · remedido 159/159 | `reviews/0-17.md`: B1/B2 fechados; N1 (COLOR_PAIRS sem amarração ao CSS) e N2 (foco `accent-ink` sobre escuro) para a fila; **falta cor de erro na paleta** (identidade, §12) |
 
 Não bloqueantes da 0-14 (`reviews/0-14.md`), que vão para stories seguintes:
 - N1: a versão de Node diverge entre `time.yml` (`v22+`), `package.json` (`>=22.12`), o lock
@@ -130,4 +133,5 @@ confere quando ele aparecer.
 
 **Com o Pedro:** (1) perguntar à TI se a conta `crm-api` do realm real consegue chamar a Admin API (o token precisa da audiência do escopo `kc-admin-api`); (2) **revogar o token antigo do GitHub** (o novo, com `repo` + `workflow` + `write:packages`, já está em uso; o antigo ainda responde 200).
 
-**Para a COLHEITA:** dois agentes rodando `npm ci` no mesmo `frontend/node_modules` se atropelam (reviews/0-15.md). Não paralelizar a suíte do frontend.
+**Para a COLHEITA:** o Revisor da 0-17 rodou sabotagens no `frontend/` real quando o clone sumiu (ficou em HEAD destacado; desfeito, sem perda). Sabotagem só em clone, e conferir o `cd` antes.
+**Também para a COLHEITA:** dois agentes rodando `npm ci` no mesmo `frontend/node_modules` se atropelam (reviews/0-15.md). Não paralelizar a suíte do frontend.
