@@ -81,19 +81,29 @@ Respostas à TI no ADR 0003, emenda §15, e na spec P-18: callback
 **Nenhuma decisão pendente do Pedro.**
 
 **Pendências do humano e da TI (nenhuma bloqueia a 0-01):**
-- [ ] Pedro → TI: repassar as três respostas e pedir que cadastre `https://crm.akeel.com.br/`
-      (exato) como redirect e post-logout redirect no `crm-bff`.
+- [ ] Pedro → TI: manter redirects exatos (sem curinga) e confirmar *Valid post logout redirect URIs*
 - [ ] Pedro: mapear os conjuntos de permissões nos 4 perfis (P-19, Onda 1).
 - [ ] Trocar todos os secrets e o token do GitHub antes da produção (combinado com o Pedro).
 - [ ] Com a Akeel: P-07 (data), provedor do backup no Brasil.
+
+### Onda 0: andamento
+
+| Story | Estado | Evidência |
+|---|---|---|
+| 0-01 | **fechada** (14:40–14:46, ~6 min) | `pre_requisito` exit 0 remedido no `main`; `reviews/0-01.md` sem bloqueantes; raiz `cb1bff4` + `0759a7f`, backend `e60799f`, frontend `ce18bd6` |
+
+Não bloqueante, que fica registrado: `!.env.example` nos três `.gitignore` libera um `.env*`
+para versionamento (reviews/0-01.md item 3). Fica enquanto o arquivo não existir; o Revisor
+confere quando ele aparecer.
 
 ### Próxima ação de cada papel
 
 | Papel | Próxima ação | Bloqueada por |
 |---|---|---|
-| devops | 0-01: criar os repositórios de produto (`crm-akeel-backend`, `crm-akeel-frontend`) | nada: pronto para despachar |
-| qa, dev, revisor | trilhas B e F, depois de 0-01 | 0-01 |
-| arquiteto, planejador | — | — |
+| devops | 0-02 (ambiente local: compose) — trilha R | nada |
+| qa → dev | 0-05 (backend Java 25 + Postgres) — trilha B | nada |
+| qa → dev | 0-14 (esqueleto do frontend) — trilha F | nada |
+| orquestrador | criar os remotos `crm-akeel-backend` e `crm-akeel-frontend` no GitHub | autorização do Pedro |
 
 ### Em voo
 
