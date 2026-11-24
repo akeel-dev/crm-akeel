@@ -112,7 +112,9 @@ espera o contrato com a sessão).
 back-channel do ADR 0003; 0-11, 0-12: as duas regras do ADR 0002. As sabotagens refeitas com a biblioteca real em 0-09,
 0-10 e 0-13, `reviews/0-06.md` N3, **não** tocam o arquivo: vão para o relatório e o
 Registro, `decisoes §17`/`§18`); `compose.yaml` (0-02, 0-03, 0-04); `.gitignore` do raiz (0-01,
-0-02); `frontend/package.json` e `frontend/src/**` (0-14, 0-16 a 0-20);
+0-02); `frontend/package.json` e `frontend/src/**` (0-14, 0-16 a 0-20); `frontend/src/design/**`,
+`frontend/test/brand.test.ts` e `frontend/test/design-system.test.tsx` (0-17, 0-19: a cor de
+erro, `decisoes §21`, entrou como critério 10 da 0-19);
 `frontend/eslint.config.js` (0-14, 0-16, 0-17, 0-19); `frontend/index.html` e
 `frontend/public/**` (0-14, 0-17: título e favicon).
 
@@ -126,7 +128,7 @@ Registro, `decisoes §17`/`§18`); `compose.yaml` (0-02, 0-03, 0-04); `.gitignor
 | Keycloak | 0-02, 0-09, 0-19, 0-20 (realm local `crm`, igual ao real, nome só por `KEYCLOAK_REALM`) | login contra o realm real: clientes criados (`decisoes §15`); em dev só à mão, pelo `crm-bff-dev`; homologação com o real espera a Onda 1 e o cadastro de `https://crm.akeel.com.br/` (pendência) |
 | Outbox | 0-12 (ADR 0002) | purga das tabelas: *depois, se* pesarem |
 | Jobs | 0-10 | — |
-| Design system | 0-17 (estrutura, tokens, componentes base, cores da paleta do Pedro e `bg-dark`, tipografia, nome, wordmark e favicon provisórios) | identidade definitiva e logo gráfico: P-12 (não bloqueia; troca por tokens) |
+| Design system | 0-17 (estrutura, tokens, componentes base, cores da paleta do Pedro e `bg-dark`, tipografia, nome, wordmark e favicon provisórios); 0-19, critério 10 (cor de erro `danger-ink`/`danger`, `decisoes §21`) | identidade definitiva e logo gráfico: P-12 (não bloqueia; troca por tokens) |
 | Backups | 0-03 (mecanismo, local) | destino real: P-17; alerta de falha: observabilidade, fora |
 | Envio de e-mail | 0-11 | verificação de dentro do `worker` na VPS: pendência "VPS" |
 

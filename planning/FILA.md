@@ -128,7 +128,7 @@ confere quando ele aparecer.
 
 - qa: 0-09.
 
-**Com o Pedro:** confirmar a cor de erro proposta em §20 (`#b42318` / `#f97066`).
+**Com o Pedro:** nada pendente.
 
 **Para a COLHEITA:** (1) o Revisor da 0-17 rodou sabotagens no `frontend/` real quando o clone
 sumiu (desfeito, sem perda): sabotagem só em clone, e conferir o `cd` antes. (2) dois agentes
