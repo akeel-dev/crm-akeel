@@ -204,7 +204,8 @@
         "acr",
         "basic",
         "profile",
-        "email"
+        "email",
+        "kc-admin-api"
       ]
     },
     {

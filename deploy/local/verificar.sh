@@ -6,7 +6,8 @@
 # Confere, nesta ordem, e para no primeiro erro (exit 1):
 #   crit. 1  todos os serviços do compose "healthy"
 #   crit. 2  PostgreSQL >= 17 e os dois bancos (CRM e Keycloak, este com tabelas)
-#   crit. 3  well-known do realm $KEYCLOAK_REALM e, pela Admin API local, os três
+#   crit. 3  well-known do realm $KEYCLOAK_REALM; a conta de serviço crm-api lê usuários
+#            pela Admin API (200) e não altera o realm (403); pela Admin API local, os três
 #            clientes, os segredos vindos do segredo local, os grupos, os usuários, os
 #            claims de um token de exemplo e nenhum provedor de identidade
 #   crit. 4  a chave S3 do segredo local lista o bucket (e uma chave errada não lista)
@@ -115,6 +116,24 @@ cc=$(curl -s -o /dev/null -w '%{http_code}' "$kc/realms/$realm/protocol/openid-c
 adm "/users?username=service-account-crm-api&exact=true" | jq -e 'length == 1' >/dev/null ||
   falha 3 "conta de serviço service-account-crm-api ausente"
 ok 3 "crm-api: client_credentials com o segredo local -> 200; conta de serviço presente"
+
+# A conta de serviço usa a Admin API (RF-IAM-02): lê usuários, não altera o realm.
+# No Keycloak 26 isso exige a audiência do client scope kc-admin-api no token
+# (defaultClientScopes do crm-api). Sem ele, a Admin API devolve 401 (review 0-02, N1).
+api_token=$(curl -fsS "$kc/realms/$realm/protocol/openid-connect/token" \
+  -d grant_type=client_credentials -d client_id=crm-api \
+  --data-urlencode "client_secret@$seg/crm_api_client_secret" | jq -r .access_token)
+[ -n "$api_token" ] && [ "$api_token" != null ] || falha 3 "sem token do crm-api"
+api_adm() { # método caminho [corpo]
+  curl -s -o /dev/null -w '%{http_code}' -X "$1" -H "Authorization: Bearer $api_token" \
+    -H 'Content-Type: application/json' ${3:+--data "$3"} "$kc/admin/realms/$realm$2"
+}
+cod=$(api_adm GET "/users?max=1")
+[ "$cod" = 200 ] || falha 3 "crm-api: GET /admin/realms/$realm/users -> $cod (esperado 200; 401 = falta o escopo kc-admin-api)"
+ok 3 "crm-api: GET /admin/realms/$realm/users -> 200"
+cod=$(api_adm PUT "" '{"displayName":"verificar-nao-pode"}')
+[ "$cod" = 403 ] || falha 3 "crm-api: PUT /admin/realms/$realm -> $cod (esperado 403: não pode alterar o realm)"
+ok 3 "crm-api: PUT /admin/realms/$realm -> 403 (não altera o realm)"
 
 web=$(cliente crm-web)
 echo "$web" | jq -e '.publicClient == true and .standardFlowEnabled == true

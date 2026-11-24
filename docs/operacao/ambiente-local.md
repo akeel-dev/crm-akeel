@@ -15,8 +15,13 @@ Sempre a partir da raiz do projeto. Precisa de Docker, `openssl`, `curl` e `jq`.
 ```
 sh deploy/local/gerar-segredos.sh      # cria .env e deploy/local/secrets/* (não sobrescreve)
 docker compose up -d --wait            # sai com 0 quando todos estão healthy
-sh deploy/local/verificar.sh           # confere os critérios 2 a 5 da story 0-02
+sh deploy/local/verificar.sh           # confere os critérios 1 a 5 da story 0-02
 ```
+
+O `gerar-segredos.sh` roda **antes** de qualquer comando `docker compose`, inclusive o
+`docker compose down -v && docker compose up -d --wait && sh deploy/local/verificar.sh`
+do "Como verificar" da story 0-02: sem o `.env` e os arquivos de `deploy/local/secrets/`,
+o compose recusa até o `down` (`required variable KEYCLOAK_REALM is missing a value`).
 
 O script gera um valor aleatório para cada nome de `deploy/local/segredos.example` e
 copia `deploy/local/.env.example` para `.env`. Os dois destinos são ignorados pelo git
@@ -69,7 +74,7 @@ clientes e a senha dos usuários entram nela por substituição `${VAR}` na impo
 | Cliente | Tipo | Notas |
 |---|---|---|
 | `crm-bff` | confidencial, Authorization Code + PKCE `S256` | redirect e post-logout só `http://localhost:*` (cobre `http://localhost:5173/login/oauth2/code/keycloak`); Backchannel e Front-channel logout URL vazias, como no real |
-| `crm-api` | confidencial, só `client_credentials` | conta de serviço com `view-users`, `manage-users`, `query-users` e `query-groups` do `realm-management` |
+| `crm-api` | confidencial, só `client_credentials` | conta de serviço com `view-users`, `manage-users`, `query-users` e `query-groups` do `realm-management`; o client scope `kc-admin-api` está nos `defaultClientScopes` dele, porque no Keycloak 26 a Admin API só aceita o token com a audiência que esse escopo põe (sem ele: `401`). O `verificar.sh` confere `GET /admin/realms/<realm>/users` → `200` e `PUT /admin/realms/<realm>` → `403` (não altera o realm). O realm real precisa do mesmo escopo no cliente dele |
 | `crm-web` | público, PKCE `S256` | só paridade com o real; o CRM não faz login por ele (P-18) |
 
 Grupos: `/Perfis/Administradores` (`admin`), `/Perfis/Gestores` (`gestor`),
