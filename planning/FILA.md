@@ -36,7 +36,9 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 ### Em voo
 
 
-**Bloqueio de ambiente (humano):** liberar disco no Mac e reiniciar o Docker Desktop. Depois: remedir 0-05, rodar de novo a verificação da 0-02 (DevOps) e `docker compose down -v` dos restos.
+**Com o Pedro:** (1) perguntar à TI se a conta `crm-api` do realm real consegue chamar a Admin API (o token precisa da audiência do escopo `kc-admin-api`); (2) **revogar o token antigo do GitHub** (o novo, com `repo` + `workflow` + `write:packages`, já está em uso; o antigo ainda responde 200).
+
+**Para a COLHEITA:** dois agentes rodando `npm ci` no mesmo `frontend/node_modules` se atropelam (reviews/0-15.md). Não paralelizar a suíte do frontend.
 
 ## 2026-11-24 (tarde) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -94,7 +96,9 @@ Respostas à TI no ADR 0003, emenda §15, e na spec P-18: callback
 | 0-01 | **fechada** (14:40–14:46, ~6 min) | `pre_requisito` exit 0 remedido no `main`; `reviews/0-01.md` sem bloqueantes; raiz `cb1bff4` + `0759a7f`, backend `e60799f`, frontend `ce18bd6` |
 | 0-05 | **fechada** (14:49–15:20) · QA `7ed1b96` · Dev `5b29975` · remedido 15:12: 7/7, exit 0 | `reviews/0-05.md` sem bloqueantes; N1 (teste de fuso em UTC) em correção pelo Dev; N2 resolvido na emenda do ADR 0001; N3/N4 baixos |
 | 0-14 | **fechada** (14:49–15:10, ~21 min) · QA `2c46456` · Dev `0e63a74` · remedido: 5/5 verdes, exit 0 | `reviews/0-14.md` sem bloqueantes; Registro a preencher (Planejador). N1 Node corrigido: QA `1021044`, Dev `2c0a12c`, remedido 5/5, 0 EBADENGINE |
-| 0-02 | DevOps: arquivos prontos, **sem commit** | bloqueada: Docker somente leitura (disco do Mac 99%, 2,1 GiB livres) |
+| 0-02 | **fechada** (14:49–15:40) · DevOps `b7e15ca` · remedido 15:20: 21/21 ok | `reviews/0-02.md` sem bloqueantes. **N1 (média):** `crm-api` leva 401 na Admin API local (falta o escopo `kc-admin-api`); DevOps corrige depois da 0-06. Perguntar à TI se o realm real tem o mesmo problema |
+| 0-06 | Dev `516d5f1` (deps de teste, ver `conflitos/0-06-dependencias-pom.md`) · Arquiteto em voo | — |
+| 0-15 | **fechada** · DevOps `5aa603f` · `reviews/0-15.md` sem bloqueantes · **CI verde no GitHub** (run 45459445549: suíte, lint, audit, build, imagem) | N1–N4 baixos (gatilho duplo em PR, imagens por tag, `EXPOSE` redundante, lint fora do "Como verificar") |
 
 Não bloqueantes da 0-14 (`reviews/0-14.md`), que vão para stories seguintes:
 - N1: a versão de Node diverge entre `time.yml` (`v22+`), `package.json` (`>=22.12`), o lock
@@ -120,4 +124,6 @@ confere quando ele aparecer.
 ### Em voo
 
 
-**Bloqueio de ambiente (humano):** liberar disco no Mac e reiniciar o Docker Desktop. Depois: remedir 0-05, rodar de novo a verificação da 0-02 (DevOps) e `docker compose down -v` dos restos.
+**Com o Pedro:** (1) perguntar à TI se a conta `crm-api` do realm real consegue chamar a Admin API (o token precisa da audiência do escopo `kc-admin-api`); (2) **revogar o token antigo do GitHub** (o novo, com `repo` + `workflow` + `write:packages`, já está em uso; o antigo ainda responde 200).
+
+**Para a COLHEITA:** dois agentes rodando `npm ci` no mesmo `frontend/node_modules` se atropelam (reviews/0-15.md). Não paralelizar a suíte do frontend.
