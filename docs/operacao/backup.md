@@ -37,13 +37,25 @@ O destino vem do **segredo do Docker `backup`**: um diretório, montado em
 | `backup_cipher_pass` | `BACKUP_CIPHER_PASS` | senha da cifra (pgBackRest e rclone). **Perdeu, perdeu o backup**: guarde fora da VPS, com o Pedro |
 | `backup_s3_ca_cert` | (opcional) | CA em PEM, só para destino com CA própria (o teste local usa) |
 
-- Sem `BACKUP_SEGREDOS`, o compose usa `deploy/backup/sem-destino/`, que tem o arquivo
-  `SEM_DESTINO`: o PostgreSQL descarta o WAL **com aviso no log**
-  (`crm-pgbackrest: sem destino de backup`), e `backup.sh`/`restaurar.sh` recusam. É o
-  modo do ambiente local de desenvolvimento.
+- **Sem destino, falha fechado.** Sem `BACKUP_SEGREDOS`, o compose usa
+  `deploy/backup/sem-destino/`, que tem só o arquivo `SEM_DESTINO`. Nesse caso o
+  `archive_command` **falha** (`crm-pgbackrest: sem destino de backup (SEM_DESTINO) fora do
+  modo de desenvolvimento; WAL ... fica em pg_wal`): o PostgreSQL conta a falha em
+  `pg_stat_archiver.failed_count`, guarda o WAL em `pg_wal` e tenta de novo. Nada se perde;
+  o disco cresce. `backup.sh` e `restaurar.sh` recusam.
+- **O descarte só existe no modo de desenvolvimento, e é explícito.** O WAL só é
+  descartado (exit 0, com aviso no log `... BACKUP_MODO=desenvolvimento); WAL ... descartado`)
+  quando as duas coisas valem juntas: o segredo tem `SEM_DESTINO` **e** o serviço
+  `postgres` tem `BACKUP_MODO=desenvolvimento` no ambiente. O `compose.yaml` (o compose
+  local) declara `BACKUP_MODO: ${BACKUP_MODO-desenvolvimento}`; o compose de produção não deve
+  declarar `BACKUP_MODO`, e então lá um `.env` sem `BACKUP_SEGREDOS` falha fechado em vez de
+  perder WAL em silêncio. Para ver a falha fechada localmente: `BACKUP_MODO= docker compose
+  up -d --force-recreate --no-deps postgres` (o `testar-local.sh` faz isso, fase
+  `[falha-fechada]`).
 - Com um diretório sem `SEM_DESTINO` e faltando qualquer arquivo, o `archive_command`
-  **falha**: o PostgreSQL guarda o WAL em `pg_wal` e tenta de novo (nada se perde, o
-  disco cresce). Isso é o que o alerta de backup vai precisar olhar (RNF-12, fora da 0-03).
+  também **falha**, do mesmo jeito. `failed_count` subindo e arquivos `.ready` em
+  `pg_wal/archive_status` são o que o alerta de backup vai precisar olhar (RNF-12, fora da
+  0-03).
 - Nada de destino em arquivo versionado. O `deploy/postgres/pgbackrest.conf` tem só a
   política (retenção, cifra, prefixos). Quem guarda isso é o
   `sh deploy/backup/verificar-portabilidade.sh`, que está na `comandos.suite`.
@@ -89,9 +101,18 @@ O destino vem do **segredo do Docker `backup`**: um diretório, montado em
 ## Como trocar de provedor
 
 1. No provedor novo (com dados no Brasil): crie um bucket e uma chave só para ele.
-2. Num diretório **fora do repositório** (ex.: `/srv/crm/segredos/backup-novo/`, `700`,
-   arquivos `644`, dono o usuário do deploy), crie os sete arquivos da tabela acima.
-   Gere uma senha de cifra nova; não reuse a do destino antigo.
+2. Num diretório **fora do repositório** (ex.: `/srv/crm/segredos/backup-novo/`), crie os
+   sete arquivos da tabela acima, com o diretório em **`711`** e os arquivos em **`644`**,
+   dono o usuário do deploy (`chmod 711 dir && chmod 644 dir/*`). Gere uma senha de cifra
+   nova; não reuse a do destino antigo. Por que `711`: o segredo com `file:` do compose é
+   um bind mount, que no Linux mantém dono e modo do host, e o `archive_command` roda como
+   `postgres` (uid 999 na imagem), que não é o dono. Ele precisa atravessar o diretório
+   (`x`) e ler os arquivos (`r`). Com `700` ele não entra, não acha nem `SEM_DESTINO`, e
+   o WAL acumula em `pg_wal`. `711` dá a travessia sem dar a listagem; os nomes já são
+   públicos (a tabela acima), então o que protege os valores é a VPS não ter outro usuário
+   de login além do deploy. O `testar-local.sh` usa os mesmos `711`/`644`. Medido num
+   contêiner Linux com o diretório do uid 1000: em `700`, o uid 999 não vê `SEM_DESTINO`
+   nem lê arquivo; em `711`, vê e lê, e a listagem continua negada.
 3. Aponte `BACKUP_SEGREDOS` para esse diretório (no `.env` da VPS) e recrie o PostgreSQL:
    `docker compose up -d --wait postgres`. A partir daqui o WAL vai para o destino novo.
    Pare antes os serviços que usam o banco e suba-os depois: o Keycloak local ficou com
@@ -117,8 +138,10 @@ sh deploy/backup/restaurar.sh --repo 2 --so-banco              # de um completo 
 sh deploy/backup/restaurar.sh --so-arquivos --arquivos-de 2026-11-24/184715Z   # uma versão antiga
 ```
 
-O que ele faz: para os serviços de `RESTAURAR_PARAR` (padrão `keycloak`; em produção,
-`api worker`) e o `postgres`; roda `pgbackrest restore --delta` num contêiner avulso
+O que ele faz: para os serviços de `RESTAURAR_PARAR` (padrão vazio; em produção,
+`RESTAURAR_PARAR="api worker"`; no compose local, `RESTAURAR_PARAR=keycloak`, porque o
+Keycloak local usa o mesmo PostgreSQL. Em produção o Keycloak é da TI e não está no
+compose) e o `postgres`; roda `pgbackrest restore --delta` num contêiner avulso
 sobre o mesmo volume; sobe o `postgres`, espera a recuperação terminar e a promoção;
 devolve os arquivos com `rclone copy` (copy, não sync: não apaga o que for mais novo no
 bucket); sobe de novo o que parou. Cada restauração com alvo abre uma timeline nova; o
@@ -163,11 +186,17 @@ docker compose --profile backup-teste up -d --wait && sh deploy/backup/testar-lo
 ```
 
 O perfil `backup-teste` sobe um segundo Garage (`garage-destino`) atrás de TLS
-(`backup-destino`, Caddy com CA interna). O `testar-local.sh` cria dois buckets com
-chaves próprias, gera os segredos de teste em `deploy/backup/secrets/` (ignorado pelo
-git), faz backup, apaga os bancos `crm` e `keycloak` e um objeto, restaura, confere, e
+(`backup-destino`, Caddy com CA interna). O `testar-local.sh` primeiro prova a falha
+fechada (sem destino e sem `BACKUP_MODO`, `failed_count` sobe e o WAL fica em `pg_wal`) e
+o descarte do modo de desenvolvimento (o mesmo WAL some e `archived_count` sobe). Depois
+cria dois buckets com chaves próprias, gera os segredos de teste em
+`deploy/backup/secrets/` (ignorado pelo git), faz backup, confere que `archived_count`
+subiu com destino, apaga os bancos `crm` e `keycloak` e um objeto, restaura, confere, e
 apaga tudo o que criou no fim (passe ou falhe; se a falha deixar os bancos apagados,
-ele mantém o destino e imprime o comando de restauração). Leva uns 2 minutos.
+ele mantém o destino e imprime o comando de restauração). No fim ele também **derruba o
+perfil `backup-teste`** (remove os contêineres `garage-destino` e `backup-destino`; os
+volumes ficam, para a CA do Caddy não mudar), então o `sh deploy/local/verificar.sh` da
+0-02 volta a ficar verde sem passo à mão. Leva uns 4 minutos com o `up`.
 
 Precisa do ambiente da story 0-02 de pé (`deploy/local/gerar-segredos.sh` já rodado):
 o `garage-destino` reusa os segredos internos do Garage local.
@@ -198,16 +227,32 @@ O código de `deploy/` não leva comentário (`decisoes/2026-11-24.md §17`); o 
   SHA-256 dele, para que a cifra dependa de um segredo só. As duas passam ao
   `rclone obscure` por stdin, nunca como argumento.
 - **`SEM_DESTINO`** é um arquivo vazio. Ter o arquivo já quer dizer "não há destino".
+  Sozinho, ele faz o `archive_command` falhar; só com `BACKUP_MODO=desenvolvimento` no
+  ambiente do `postgres` ele descarta. O padrão do compose é `${BACKUP_MODO-desenvolvimento}`
+  (com `-`, não `:-`), para que `BACKUP_MODO=` vazio desligue o descarte.
 - **O `verificar-portabilidade.sh` escreve os padrões com `[.]` e com as palavras
   partidas** (`'wr''angler'`). Assim o script não casa consigo mesmo e não precisa se
   excluir da busca: uma linha de provedor escondida nele também é recusada. Ele ignora
-  pastas `secrets/` (segredos gerados, fora do git). O que ele **não** pega: um destino
-  que chegue de fora do escopo (outro diretório, variável vinda do ambiente da VPS) ou
-  escrito de forma ofuscada. É checagem de texto, não de execução.
+  pastas `secrets/` (segredos gerados, fora do git). Além de host de provedor, ferramenta
+  de provedor e URL de domínio, ele recusa: destino de pgBackRest ou rclone que não venha
+  de `BACKUP_S3_*`; **qualquer padrão** em `${BACKUP_S3_*}` ou `${BACKUP_CIPHER_*}`
+  (`:-`, `-`, `:=`, `=`, `:+`, `+`; o `:?` passa); padrão com cara de host em qualquer
+  `${VAR:-...}` (ex.: `${CRM_S3:-s3.empresa.com.br}`); valor literal atribuído a
+  `BACKUP_S3_*`/`BACKUP_CIPHER_*` (só `BACKUP_S3_PORT=443` passa, o padrão do https); host
+  literal sem esquema em variável com `ENDPOINT` ou `HOST` no nome; chave de remote rclone
+  (`endpoint =`, `provider =`, `region =`, `access_key_id =` ...) em qualquer arquivo;
+  `RCLONE_S3_*`, `RCLONE_B2_*` etc.; `provider` do rclone diferente de `Other`. Quando a
+  regra é de valor de `BACKUP_*`, ele imprime só o nome, nunca o valor. Efeito colateral
+  aceito: um `${VAR:-arquivo.txt}` no escopo é recusado (parece host). O que ele **não**
+  pega: um destino que chegue de fora do escopo (outro diretório, variável vinda do
+  ambiente da VPS) ou escrito de forma ofuscada (indireção por variável sem nome de
+  `ENDPOINT`/`HOST`, por exemplo). É checagem de texto, não de execução.
 - **Teste:** o `garage-destino` reusa o `garage_rpc_secret` e o `garage_admin_token` do
   Garage local (são dois clusters separados, que não se veem). O Caddy passa o
   cabeçalho `Host` intacto, porque a assinatura S3 depende dele.
-- **Saídas do `testar-local.sh`:** `[cifra]` (destino com `pgbackrest/` e `arquivos/`,
+- **Saídas do `testar-local.sh`:** `[falha-fechada]` (sem destino nem `BACKUP_MODO`:
+  `failed_count` sobe, `.ready` em `pg_wal`), `[desenvolvimento]` (com `BACKUP_MODO`, o WAL
+  pendente é descartado), `[arquivo]` (com destino, `archived_count` sobe), `[cifra]` (destino com `pgbackrest/` e `arquivos/`,
   tudo cifrado), `[restauracao]` (bancos e objeto de volta), `[versoes]` (versão anterior
   em `versoes/<dia>/`), `[troca]` (o mesmo ciclo noutro bucket com outra chave).
 
@@ -223,4 +268,4 @@ O código de `deploy/` não leva comentário (`decisoes/2026-11-24.md §17`); o 
 | `deploy/backup/backup.sh`, `restaurar.sh` | os comandos de operação (host) |
 | `deploy/backup/verificar-portabilidade.sh` | a checagem de acoplamento (suíte) |
 | `deploy/backup/testar-local.sh`, `teste/` | o teste de ponta a ponta e o destino de teste |
-| `deploy/backup/sem-destino/SEM_DESTINO` | o segredo padrão: "não há destino" |
+| `deploy/backup/sem-destino/SEM_DESTINO` | o segredo padrão: "não há destino" (falha fechado; descarta só com `BACKUP_MODO=desenvolvimento`) |

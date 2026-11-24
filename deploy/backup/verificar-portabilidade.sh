@@ -43,6 +43,7 @@ dest() {
       n=${l%%:*}; txt=${l#*:}
       if [ -n "$3" ] && printf '%s' "$txt" | grep -q -E -e "$3"; then continue; fi
       t=$(printf '%s' "$txt" | grep -o -E -e "$2" | head -1)
+      [ "${4-}" != nome ] || t=$(printf '%s' "$t" | sed 's/[[:space:]]*[=:].*//')
       printf '%s:%s:%s:%s\n' "${f#"$alvo"/}" "$n" "$1" "$t" >> "$achados"
     done
   done
@@ -68,6 +69,19 @@ dest destino 'RCLONE_CONFIG_[A-Z0-9]+_TYPE[[:space:]]*[=:][[:space:]]*"?[a-z0-9]
 dest destino 'RCLONE_CONFIG_[A-Z0-9]+_REMOTE[[:space:]]*[=:].*' '_REMOTE[[:space:]]*[=:][[:space:]]*"destino:\$BACKUP_S3_BUCKET/'
 dest destino '(^|[[:space:]])--s3-[a-z-]+' ''
 dest destino '(^|[^[:alnum:]_]):(s3|b2|gcs|azureblob|swift|drive)[,:]' ''
+dest destino 'RCLONE_(S3|B2|GCS|AZUREBLOB|SWIFT)_[A-Z0-9_]+[[:space:]]*[=:]' ''
+dest destino 'RCLONE_[A-Z0-9_]*PROVIDER[[:space:]]*[=:][[:space:]]*"?[A-Za-z]+' '_PROVIDER[[:space:]]*[=:][[:space:]]*"?Other"?[[:space:]]*$'
+
+dest destino '\$\{BACKUP_(S3|CIPHER)_[A-Z0-9_]*:?[-=+]' ''
+dest destino '\$\{[A-Za-z_][A-Za-z0-9_]*:?[-=+][[:space:]"'"'"']*[A-Za-z0-9-]+([.][A-Za-z0-9-]+)+(:[0-9]+)?([/}"'"'"'[:space:]]|$)' ''
+dest destino '(^|[^[:alnum:]_{])BACKUP_(S3|CIPHER)_[A-Z0-9_]+[[:space:]]*[=:][[:space:]]*"?[^$"[:space:];]' '(^|[^[:alnum:]_])BACKUP_S3_PORT[=]443([;[:space:]]|$)' nome
+dest destino '[A-Z0-9_]*(ENDPOINT|HOST)[A-Z0-9_]*[[:space:]]*[=:][[:space:]]*["'"'"']?[A-Za-z0-9-]+([.][A-Za-z0-9-]+)+' ''
+for f in $arquivos; do
+  grep -n -i -E '^[[:space:]]*(endpoint|provider|region|access_key_id|secret_access_key|session_token|server_side_encryption|account|key|sas_url|service_account_file)[[:space:]]*=' "$f" |
+    while IFS= read -r l; do
+      printf '%s:%s:destino:%s\n' "${f#"$alvo"/}" "${l%%:*}" "$(printf '%s' "${l#*:}" | cut -d= -f1 | tr -d ' ')" >> "$achados"
+    done
+done
 
 dest destino '(^|[^[:alnum:]])(s3|b2|gs|r2|az|wasabi)://' ''
 
@@ -80,5 +94,5 @@ if [ -s "$achados" ]; then
 fi
 echo "verificar-portabilidade: ok [host] nenhum endereço de provedor"
 echo "verificar-portabilidade: ok [ferramenta] nenhuma ferramenta de provedor"
-echo "verificar-portabilidade: ok [destino] pgBackRest e rclone só com destino de BACKUP_S3_*; repositório só s3; provider Other; crypt em destino:; sem URL de domínio literal"
+echo "verificar-portabilidade: ok [destino] pgBackRest e rclone só com destino de BACKUP_S3_*; repositório só s3; provider Other; crypt em destino:; sem URL de domínio literal; sem host literal em BACKUP_S3_*, ENDPOINT ou HOST; sem padrão em \${BACKUP_S3_*}; sem chave de remote rclone em arquivo; sem RCLONE_S3_*"
 exit 0

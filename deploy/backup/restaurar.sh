@@ -17,7 +17,7 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-parar=${RESTAURAR_PARAR-keycloak}
+parar=${RESTAURAR_PARAR-}
 
 echo "restaurar.sh: início $(date -u +%Y-%m-%dT%H:%M:%SZ) em $(hostname -s)"
 

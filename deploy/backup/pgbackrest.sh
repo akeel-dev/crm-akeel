@@ -7,8 +7,12 @@ rc=0
 destino_carregar || rc=$?
 if [ "$rc" -eq 3 ]; then
   if [ "${1-}" = "archive-push" ]; then
-    echo "crm-pgbackrest: sem destino de backup (SEM_DESTINO); WAL ${2-} não arquivado" >&2
-    exit 0
+    if [ "${BACKUP_MODO-}" = desenvolvimento ]; then
+      echo "crm-pgbackrest: sem destino de backup (SEM_DESTINO, BACKUP_MODO=desenvolvimento); WAL ${2-} descartado" >&2
+      exit 0
+    fi
+    echo "crm-pgbackrest: sem destino de backup (SEM_DESTINO) fora do modo de desenvolvimento; WAL ${2-} fica em pg_wal" >&2
+    exit 1
   fi
   echo "crm-pgbackrest: sem destino de backup (SEM_DESTINO); nada a fazer" >&2
   exit 1

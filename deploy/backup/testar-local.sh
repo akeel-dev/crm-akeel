@@ -36,7 +36,7 @@ limpar() {
   bancos=$(psql_q postgres "SELECT count(*) FROM pg_database WHERE datname IN ('crm','keycloak')" 2>/dev/null)
   if [ "$bancos" != 2 ]; then
     echo "testar-local.sh: os bancos não estão de pé; o destino de teste foi MANTIDO. Para voltar:" >&2
-    echo "  BACKUP_SEGREDOS=$segredos/teste-${d:-a} sh deploy/backup/restaurar.sh --ponto corte-$run-${d:-a}" >&2
+    echo "  BACKUP_SEGREDOS=$segredos/teste-${d:-a} RESTAURAR_PARAR=keycloak sh deploy/backup/restaurar.sh --ponto corte-$run-${d:-a}" >&2
     exit "$rc"
   fi
   for b in crm keycloak; do psql_q "$b" "DROP SCHEMA IF EXISTS backup_teste CASCADE" >/dev/null 2>&1; done
@@ -48,11 +48,12 @@ limpar() {
     G key delete --yes "teste-backup-$d-$run" >/dev/null
     rm -rf "$segredos/teste-$d"
   done
-  unset BACKUP_SEGREDOS
+  unset BACKUP_SEGREDOS BACKUP_MODO
   docker compose stop keycloak >/dev/null 2>&1
   docker compose up -d --wait --force-recreate --no-deps postgres >/dev/null 2>&1
   docker compose up -d --wait keycloak >/dev/null 2>&1
-  echo "testar-local.sh: limpo (schema backup_teste, teste-backup/$run, buckets e chaves de teste, segredos de teste); postgres de volta ao segredo padrão (sem destino); exit $rc"
+  docker compose --profile backup-teste rm -s -f garage-destino backup-destino >/dev/null 2>&1
+  echo "testar-local.sh: limpo (schema backup_teste, teste-backup/$run, buckets e chaves de teste, segredos de teste); postgres de volta ao padrão do compose local (sem destino, BACKUP_MODO=desenvolvimento); perfil backup-teste derrubado (garage-destino e backup-destino removidos, volumes mantidos); exit $rc"
   exit "$rc"
 }
 trap limpar EXIT
@@ -75,7 +76,7 @@ preparar_destino() {
   bucket="crm-backup-$d-$run"
   ak="GK$(openssl rand -hex 12)"
   sk=$(openssl rand -hex 32)
-  rm -rf "$dir"; mkdir -p "$dir"; chmod 755 "$dir"
+  rm -rf "$dir"; mkdir -p "$dir"; chmod 711 "$dir"
   G bucket create "$bucket" >/dev/null
   G key import --yes -n "teste-backup-$d-$run" "$ak" "$sk" >/dev/null
   G bucket allow --read --write --owner "$bucket" --key "$ak" >/dev/null
@@ -93,15 +94,49 @@ preparar_destino() {
 preparar_destino a
 preparar_destino b
 
-apontar() {
-  BACKUP_SEGREDOS="$segredos/teste-$1"
-  export BACKUP_SEGREDOS
+recriar_postgres() {
+  BACKUP_SEGREDOS=$1
+  BACKUP_MODO=$2
+  export BACKUP_SEGREDOS BACKUP_MODO
   docker compose stop keycloak >/dev/null 2>&1
   docker compose up -d --wait --build --force-recreate --no-deps postgres >/dev/null 2>&1 ||
     falha pre "o postgres não voltou healthy"
   docker compose up -d --wait keycloak >/dev/null 2>&1 ||
     falha pre "o keycloak não voltou healthy"
 }
+
+apontar() { recriar_postgres "$segredos/teste-$1" ""; }
+
+arquivador() { psql_q postgres "SELECT archived_count || ' ' || failed_count FROM pg_stat_archiver"; }
+prontos() { psql_q postgres "SELECT count(*) FROM pg_ls_archive_statusdir() WHERE name LIKE '%.ready'"; }
+gerar_wal() { psql_q postgres "SELECT pg_logical_emit_message(false, 'testar-local', '$run'); SELECT pg_switch_wal()" >/dev/null; }
+
+recriar_postgres "$raiz/deploy/backup/sem-destino" ""
+set -- $(arquivador); a0=$1; f0=$2
+gerar_wal
+i=0
+while :; do
+  set -- $(arquivador); a1=$1; f1=$2; p1=$(prontos)
+  [ "$f1" -gt "$f0" ] && [ "$p1" -ge 1 ] && break
+  i=$((i + 1)); [ "$i" -le 30 ] || falha falha-fechada "failed_count $f0 -> $f1, .ready em pg_wal: $p1"
+  sleep 1
+done
+[ "$a1" = "$a0" ] || falha falha-fechada "archived_count mudou ($a0 -> $a1) sem destino"
+pendente=$(psql_q postgres "SELECT max(replace(name, '.ready', '')) FROM pg_ls_archive_statusdir() WHERE name LIKE '%.ready'")
+ok falha-fechada "sem-destino, BACKUP_MODO vazio: failed_count $f0 -> $f1, archived_count $a0 -> $a1, $p1 segmento(s) .ready em pg_wal (o mais novo: $pendente)"
+
+recriar_postgres "$raiz/deploy/backup/sem-destino" desenvolvimento
+i=0
+while :; do
+  p2=$(prontos)
+  ultimo=$(psql_q postgres "SELECT coalesce(last_archived_wal, '') FROM pg_stat_archiver")
+  [ "$p2" = 0 ] && [ -n "$ultimo" ] && [ "$(printf '%s\n%s\n' "$pendente" "$ultimo" | LC_ALL=C sort | tail -1)" = "$ultimo" ] && break
+  i=$((i + 1)); [ "$i" -le 30 ] || falha desenvolvimento "pendente $pendente, last_archived_wal '$ultimo', .ready em pg_wal: $p2"
+  sleep 1
+done
+docker compose logs --no-log-prefix postgres 2>&1 | grep -q "WAL pg_wal/$pendente descartado" ||
+  falha desenvolvimento "o log do postgres não diz que $pendente foi descartado"
+ok desenvolvimento "sem-destino, BACKUP_MODO=desenvolvimento: $pendente descartado (log do postgres), last_archived_wal $ultimo, 0 .ready em pg_wal"
 
 linhas() {
   psql_q "$1" "SELECT coalesce(string_agg(fase, ',' ORDER BY fase), '') FROM backup_teste.controle WHERE id = '$2'" 2>/dev/null || echo "sem-banco"
@@ -120,6 +155,7 @@ ciclo() {
   printf 'conteudo-%s-apagado' "$m" | arq exec rclone rcat "$(origem "$d/apagado.txt")"
   ok "$d" "gravado: linha '1-antes-do-completo' em crm e keycloak; objeto.txt e apagado.txt no bucket $S3_BUCKET"
 
+  set -- $(arquivador); arq_antes=$1
   echo "--- backup.sh (destino $d)"
   sh deploy/backup/backup.sh
   if [ "$d" = a ]; then
@@ -134,6 +170,9 @@ ciclo() {
   psql_q postgres "SELECT pg_create_restore_point('$ponto')" >/dev/null
   docker compose exec -T -u postgres postgres crm-pgbackrest check >/dev/null
   ok "$d" "linha '2-depois-do-completo' gravada depois do completo; ponto '$ponto' criado e WAL arquivado (pgbackrest check)"
+  set -- $(arquivador); arq_depois=$1
+  [ "$arq_depois" -gt "$arq_antes" ] || falha arquivo "destino $d: archived_count não subiu ($arq_antes -> $arq_depois)"
+  ok arquivo "destino $d: archived_count $arq_antes -> $arq_depois, último WAL $(psql_q postgres 'SELECT last_archived_wal FROM pg_stat_archiver')"
 
   arq exec sh /opt/crm/backup/teste/inspecionar.sh "$m" "conteudo-$m" "objeto.txt" "apagado.txt" ||
     falha cifra "destino $d: inspeção do destino"
@@ -149,7 +188,7 @@ ciclo() {
   ok restauracao "destino $d: apagados os bancos crm e keycloak e o objeto objeto.txt"
 
   echo "--- restaurar.sh --ponto $ponto (destino $d)"
-  sh deploy/backup/restaurar.sh --ponto "$ponto"
+  RESTAURAR_PARAR=keycloak sh deploy/backup/restaurar.sh --ponto "$ponto"
 
   for b in crm keycloak; do
     l=$(linhas "$b" "$m")
