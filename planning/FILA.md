@@ -96,9 +96,13 @@ Respostas à TI no ADR 0003, emenda §15, e na spec P-18: callback
 | 0-01 | **fechada** (14:40–14:46, ~6 min) | `pre_requisito` exit 0 remedido no `main`; `reviews/0-01.md` sem bloqueantes; raiz `cb1bff4` + `0759a7f`, backend `e60799f`, frontend `ce18bd6` |
 | 0-05 | **fechada** (14:49–15:20) · QA `7ed1b96` · Dev `5b29975` · remedido 15:12: 7/7, exit 0 | `reviews/0-05.md` sem bloqueantes; N1 (teste de fuso em UTC) em correção pelo Dev; N2 resolvido na emenda do ADR 0001; N3/N4 baixos |
 | 0-14 | **fechada** (14:49–15:10, ~21 min) · QA `2c46456` · Dev `0e63a74` · remedido: 5/5 verdes, exit 0 | `reviews/0-14.md` sem bloqueantes; Registro a preencher (Planejador). N1 Node corrigido: QA `1021044`, Dev `2c0a12c`, remedido 5/5, 0 EBADENGINE |
-| 0-02 | **fechada** (14:49–15:40) · DevOps `b7e15ca` · remedido 15:20: 21/21 ok | `reviews/0-02.md` sem bloqueantes. **N1 (média):** `crm-api` leva 401 na Admin API local (falta o escopo `kc-admin-api`); DevOps corrige depois da 0-06. Perguntar à TI se o realm real tem o mesmo problema |
-| 0-06 | Dev `516d5f1` (deps de teste, ver `conflitos/0-06-dependencias-pom.md`) · Arquiteto em voo | — |
+| 0-02 | **fechada** (14:49–15:40) · DevOps `b7e15ca` · remedido 15:20: 21/21 ok | `reviews/0-02.md` sem bloqueantes. **N1 (média):** `crm-api` leva 401 na Admin API local (falta o escopo `kc-admin-api`); **corrigido** `b172688` (GET users 200, PUT realm 403). Perguntar à TI se o realm real tem o mesmo problema |
 | 0-15 | **fechada** · DevOps `5aa603f` · `reviews/0-15.md` sem bloqueantes · **CI verde no GitHub** (run 45459445549: suíte, lint, audit, build, imagem) | N1–N4 baixos (gatilho duplo em PR, imagens por tag, `EXPOSE` redundante, lint fora do "Como verificar") |
+| 0-06 | **fechada** · Arquiteto backend `27ecdcc` + raiz `5c6ba71` · Dev `516d5f1` · correções N1/N2/N4 `77a5ded` · remedido backend 20/20 | `reviews/0-06.md` sem bloqueantes; ADR 0001/SISTEMA.md ainda citam o padrão antigo `..platform..` (Arquiteto alinha depois da 0-03) |
+| 0-16 | **fechada** · QA `4aeffd1` + `287f1a6` · Dev `afc8659` + `c36e0c2` · remedido 62/62 · CI verde no GitHub (run 45461152294) | `reviews/0-16.md` sem bloqueantes |
+| 0-03 | DevOps em voo | — |
+| 0-07 | **fechada** · DevOps `d18f77d` · `reviews/0-07.md` sem bloqueantes · **CI verde no GitHub** (run 45462660612: suíte, Trivy, imagem) | N1 (média): a spec pede análise estática e a story não pediu (Planejador decide); N2–N5 baixos |
+| 0-17 | QA `5bbb4fb` vermelho certo (24 falhas por asserção/import) · Dev em voo | — |
 
 Não bloqueantes da 0-14 (`reviews/0-14.md`), que vão para stories seguintes:
 - N1: a versão de Node diverge entre `time.yml` (`v22+`), `package.json` (`>=22.12`), o lock

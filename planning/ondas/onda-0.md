@@ -50,10 +50,10 @@ pela Admin API (P-19). Nada nesta onda autoriza por `roles` ou `groups` (0-09, c
 | 0-07 | CI do backend e imagem | back | devops | §4.5 passos 1–3, RNF-09, RF-SEC-03 | leve | 0-06 |
 | 0-08 | Contrato OpenAPI versionado no backend | back | qa, dev | §4.2 Contrato, §12, §13.2 | leve | 0-07 |
 | 0-09 | Login BFF pelo Keycloak (`crm-bff`); o navegador só recebe cookie; sessão no PostgreSQL; token renovado no servidor; logout pelo `end_session`; callback atrás do proxy; back-channel desligado | back | qa, arquiteto, dev | D-07, D-09, §5.1, P-18, P-19, RF-SEC-03, RNF-13; ADR 0003 (com as emendas P-18 e §15) | **completo (IAM)** | 0-08 |
-| 0-10 | Modos api / worker / migrate e jobs persistidos | back | qa, dev | §4.1, §4.2 Jobs, §4.5 passo 5, RNF-13 | leve | 0-06 |
+| 0-10 | Modos api / worker / migrate e jobs persistidos | back | qa, dev, arquiteto | §4.1, §4.2 Jobs, §4.5 passo 5, RNF-13 | leve | 0-06 |
 | 0-11 | E-mail do sistema só por fila, com novas tentativas | back | qa, arquiteto, dev | D-10, §10.4, RF-NOT-05 (parcial), 07, 08, 09 | leve | 0-10 |
 | 0-12 | Evento na `outbox_event` na mesma transação; só o worker repassa e entrega | back | arquiteto, qa, dev | §0.4.3, §4.1, §4.4, §10.1 (formato); ADR 0002 | leve | 0-10 |
-| 0-13 | Arquivos por URL pré-assinada, qualquer S3 por configuração | back | qa, dev | §4.2 Arquivos, RNF-14, RF-SEC-03 | leve | 0-06 |
+| 0-13 | Arquivos por URL pré-assinada, qualquer S3 por configuração | back | qa, dev, arquiteto | §4.2 Arquivos, RNF-14, RF-SEC-03 | leve | 0-06 |
 | 0-14 | Frontend sobe, testa e constrói; rotas, cache, i18n pt-BR | front | qa, dev | D-04, §4.2, RF-UI-03 (idioma) | leve | 0-01 |
 | 0-15 | CI do frontend e imagem estática | front | devops | §4.5 passos 1–3, RNF-09 | leve | 0-14 |
 | 0-16 | Datas, horas e dinheiro no formato brasileiro e no fuso do usuário | front | qa, dev | RF-UI-03, RF-UI-04, §6.1, §12, D-02 | leve | 0-14 |
@@ -109,7 +109,9 @@ espera o contrato com a sessão).
 **Arquivos que mais de uma story toca (sempre na mesma trilha, nunca juntas):**
 `backend/pom.xml` e `backend/src/main/resources/db/migration/**` (0-05, 0-08 a 0-13);
 `backend/openapi/openapi.json` (0-08, 0-09); `ArchitectureTest` (0-06, 0-09: a regra do
-back-channel do ADR 0003; 0-11, 0-12: as duas regras do ADR 0002); `compose.yaml` (0-02, 0-03, 0-04); `.gitignore` do raiz (0-01,
+back-channel do ADR 0003; 0-11, 0-12: as duas regras do ADR 0002. As sabotagens refeitas com a biblioteca real em 0-09,
+0-10 e 0-13, `reviews/0-06.md` N3, **não** tocam o arquivo: vão para o relatório e o
+Registro, `decisoes §17`/`§18`); `compose.yaml` (0-02, 0-03, 0-04); `.gitignore` do raiz (0-01,
 0-02); `frontend/package.json` e `frontend/src/**` (0-14, 0-16 a 0-20);
 `frontend/eslint.config.js` (0-14, 0-16, 0-17, 0-19); `frontend/index.html` e
 `frontend/public/**` (0-14, 0-17: título e favicon).

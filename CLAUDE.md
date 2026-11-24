@@ -32,6 +32,14 @@ Use `/retomar`. A primeira resposta ao humano numa sessão fria começa pelo blo
 
 `/despachar <story>` · `/portao <onda>` · `/colher` · `/retomar`
 
+## Regra do humano para todo despacho
+
+- **Código sem comentários** (`decisoes/2026-11-24.md §17`): nada de comentário, JSDoc,
+  diretiva em comentário ou id de story/ADR/RF/review em `backend/`, `frontend/`, `deploy/**`
+  e `compose.yaml`. A evidência vai no relatório do papel e daí para `reviews/` ou para o
+  Registro. Os documentos do raiz ficam intactos. Os comentários antigos ficam; a regra vale
+  para todo diff novo, e o Revisor confere (`§18`).
+
 ## As duas regras que mais economizam retrabalho
 
 - **Evidência, não afirmação.** "Rodei e saiu isto" vale; "funciona" não vale.
