@@ -1,6 +1,19 @@
+# Dono: DevOps (time.yml, escrita.devops).
 .DS_Store
 
 # time-padrao
 .archify/
 .claude/worktrees/
 .claude/settings.local.json
+
+# Repositórios de produto: git próprios, o raiz não os enxerga
+# (ADR 0001, decisão 2; decisoes/2026-11-24.md §8). Como recriar: docs/operacao/repositorios.md
+/backend/
+/frontend/
+
+# Segredo local nunca entra no repositório (RF-SEC-03)
+*.secret
+secrets/
+.env
+.env.*
+!.env.example
