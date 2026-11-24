@@ -231,6 +231,14 @@ infraestrutura.
      em 2026-11-24), cifrado no cliente (`repo1-cipher-type=aes-256-cbc`), backup
      completo diário e WAL contínuo (RPO ≤ 15 min da §4.6). Retenção da §4.6
      (35 diários + 12 mensais) por `repo1-retention-*`.
+     **Emenda de 2026-11-24 (`reviews/0-03.md` N5; `planning/decisoes/2026-11-24.md §19`):**
+     o pgBackRest não tem retenção "por mês" num repositório só. Por isso a retenção usa
+     dois repositórios no mesmo destino: `repo1` (`/pgbackrest`,
+     `repo1-retention-full-type=time`, 35 dias) e `repo2` (`/pgbackrest-mensal`,
+     `repo2-retention-full-type=count`, 12 completos, alimentado por `backup.sh --mensal`),
+     conferidos em `deploy/postgres/pgbackrest.conf`. O backup **falha fechado**: sem
+     destino, o arquivamento falha e o WAL fica guardado no PostgreSQL até o destino
+     existir. O descarte só acontece no modo de desenvolvimento explícito do compose local.
    - **Arquivos: rclone de S3 para S3**, diário, com `--backup-dir` datado para que
      objeto apagado ou sobrescrito no primário vá para um prefixo do dia em vez de
      sumir; a retenção apaga os prefixos pela data no nome. Cifrado no cliente
