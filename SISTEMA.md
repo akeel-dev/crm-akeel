@@ -4,13 +4,16 @@ Dono: Arquiteto. Descreve **o que existe**, não o que vai existir.
 
 Atualizado: 2026-11-24
 
-Não existe código, módulo, banco nem suíte. As pastas `backend/` e `frontend/`
-(futuros repositórios git próprios) ainda não existem; conferido em 2026-11-24 com
-`test -d backend/.git` (exit 1). A stack proposta está em `docs/adr/0001-stack.md`
-(aceito em 2026-11-24, revisão 2, com a emenda do realm); ela vira descrição
-aqui quando a Onda 0 a construir. Reconferido em 2026-11-24, depois da spec v1.2:
-`backend/.git` e `frontend/.git` continuam sem existir (exit 1), e não há
-`compose.yaml`.
+Existem os dois repositórios de produto (conferido em 2026-11-24: `test -d backend/.git`
+e `test -d frontend/.git`, exit 0): `backend/` no commit `5b29975` (esqueleto da 0-05:
+Spring Boot 4.2.0, com Flyway 12.11.0 e jOOQ 3.21.9 gerenciados pelo Boot, e o enforcer
+`requireJavaVersion [25,)`) e `frontend/` no commit `0e63a74` (esqueleto da SPA, 0-14).
+A stack está em `docs/adr/0001-stack.md`. Ainda não há módulo de domínio nem teste de
+arquitetura.
+
+Máquina de desenvolvimento: JDK 25.0.5.1 e Node v24.22.3 (faixa do projeto
+`^22.13 || ^24 || >=26`). O `~/.mavenrc` força `JAVA_HOME` para o JDK 25; para rodar o
+Maven com outro JDK (a sabotagem do enforcer com o JDK 17), use `MAVEN_SKIP_RC=true`.
 
 Fora deste repositório, e não operado pelo CRM: o Keycloak 26.8.2 da TI em
 `https://akpannel.akeel.com.br`, realm `crm`. Conferido em 2026-11-24 pelo discovery

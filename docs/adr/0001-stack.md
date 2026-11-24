@@ -40,6 +40,33 @@ a decisão (Keycloak, BFF, o CRM como fonte de verdade dos papéis) não muda.
 - **A autorização do CRM não lê os claims `roles` e `groups`** (P-19, D-09). Regra e
   teste em "Guardado por", linhas "P-19".
 
+**Emenda de 2026-11-24 (Node, versões gerenciadas, nota de ambiente;
+`planning/decisoes/2026-11-24.md §16`, `reviews/0-14.md` N1, story 0-05):**
+- **Node: a faixa do projeto é `^22.13 || ^24 || >=26`.** É a interseção do que o
+  frontend exige (`vitest@5.1.1`: `^22.12 || ^24 || >=26`; `eslint@10.15.0`:
+  `^22.13 || >=24`); exclui 23 e 25. A máquina de desenvolvimento usa o Node 24 LTS
+  (v24.22.3, conferido com `node --version`). Substitui o "Node 26 LTS" da tabela e o
+  regex do `pre_requisito` da proposta, que aceitava qualquer 22.x e o 23. O
+  `engines` do `package.json` é do Dev.
+- **A tabela de versões é registro do que foi verificado, não exigência.** No backend,
+  valem as versões que o `spring-boot-dependencies` do Boot fixado gerencia; uma
+  sobrescrita (`<flyway.version>`, `<jooq.version>` etc.) só entra com motivo escrito
+  no `pom.xml` (correção de segurança ou defeito que nos atinge). Com o Boot 4.2.0, isso
+  dá **Flyway 12.11.0 e jOOQ 3.21.9** (conferido no `spring-boot-dependencies-4.2.0.pom`,
+  linhas `<flyway.version>` e `<jooq.version>`), que é o que o `backend/pom.xml` usa
+  desde o commit `5b29975`. As 13.13.0 e 3.21.10 da tabela eram as últimas do Maven
+  Central, não exigência. O que é exigência está em "Guardado por" (Java 25, Boot 4.2.x).
+  Alternativa considerada: fixar as últimas do Central. Mais cara (sai da matriz que o
+  Boot testa, Flyway com uma versão maior acima); o gatilho que a faria valer é um
+  defeito ou CVE corrigido só na versão nova.
+- **Nota de ambiente (máquina do Pedro):** o `~/.mavenrc` define
+  `JAVA_HOME=/opt/homebrew/opt/openjdk@25/...` e vence o `JAVA_HOME` da linha de
+  comando. A sabotagem do enforcer (provar que JDK 17 quebra o build) precisa de
+  `MAVEN_SKIP_RC=true`. Rodado em 2026-11-24, em `backend/`:
+  `JAVA_HOME=<jdk-17> ./mvnw -B validate` passa (o `.mavenrc` troca para o 25);
+  `MAVEN_SKIP_RC=true JAVA_HOME=<jdk-17> ./mvnw -B validate` → `BUILD FAILURE`,
+  `Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion failed`.
+
 ## Contexto
 
 Projeto novo, sem código. A spec v1.1 já decidiu a stack; este ADR registra o que
@@ -86,8 +113,8 @@ Hub, API do Adoptium, releases no GitHub):
 | Java | 25 | LTS mais recente segundo `api.adoptium.net` (`most_recent_lts: 25`) |
 | Spring Boot | 4.2.0 | |
 | Spring Modulith | 2.2.0 | o `spring-modulith-starter-core` 2.2.0 depende de `spring-boot-starter` 4.2.0 |
-| jOOQ | 3.21.10 | |
-| Flyway | 13.13.0 | |
+| jOOQ | 3.21.10 | última do Central; vale a 3.21.9 gerenciada pelo Boot 4.2.0 (emenda Node/versões) |
+| Flyway | 13.13.0 | última do Central; vale a 12.11.0 gerenciada pelo Boot 4.2.0 (emenda Node/versões) |
 | db-scheduler | 17.2.0 | Apache 2.0; tem `db-scheduler-spring-boot-4-starter` 17.2.0 |
 | JobRunr | 9.0.5 | LGPL v3 + licença comercial; tem `jobrunr-spring-boot-4-starter` 9.0.5 |
 | ArchUnit | 1.5.1 | |
@@ -99,7 +126,7 @@ Hub, API do Adoptium, releases no GitHub):
 | pgBackRest | 2.60.1 (2026-11-16) | `api.github.com/repos/pgbackrest/pgbackrest/releases/latest` |
 | restic | 0.20.0 (2026-11-19) | `api.github.com/repos/restic/restic/releases/latest` |
 | Vite | 8.3.8 | exige Node `^20.19.0 \|\| >=22.12.0` |
-| Node | 26 LTS ("Lithium") | |
+| Node | faixa `^22.13 \|\| ^24 \|\| >=26`; máquina em 24 LTS (v24.22.3) | emenda Node/versões; era "26 LTS" |
 
 **Achado de ambiente** (reconferido em 2026-11-24, revisão 2): a máquina do Pedro
 continua só com o JDK 17 (`/usr/libexec/java_home -V` lista um único `17.0.12`),
@@ -288,7 +315,7 @@ relativos à raiz deste projeto, mesmo dentro dos repositórios de produto.
 ```yaml
 comandos:
   # Sem os dois clones, o JDK 25, o Node e o Docker, a suíte é inexecutável, não vermelha.
-  pre_requisito: "test -d backend/.git && test -d frontend/.git && docker info >/dev/null 2>&1 && java -version 2>&1 | grep -q 'version \"25' && node --version | grep -qE '^v(2[2-9]|[3-9][0-9])\\.'"
+  pre_requisito: "test -d backend/.git && test -d frontend/.git && docker info >/dev/null 2>&1 && java -version 2>&1 | grep -q 'version \"25' && node --version | grep -qE '^v(22\\.(1[3-9]|[2-9][0-9])|24|2[6-9]|[3-9][0-9])\\.'"   # faixa ^22.13 || ^24 || >=26 (emenda Node/versões)
   # Roda a suíte de cada repositório, depois o que só o raiz enxerga (contrato e backup).
   suite: "(cd backend && ./mvnw -B verify) && (cd frontend && npm ci --no-audit --no-fund && npm test) && cmp backend/openapi/openapi.json frontend/openapi/openapi.json && sh deploy/backup/verificar-portabilidade.sh"
   suite_backend: "cd backend && ./mvnw -B verify"

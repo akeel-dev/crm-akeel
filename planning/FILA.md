@@ -92,8 +92,8 @@ Respostas à TI no ADR 0003, emenda §15, e na spec P-18: callback
 | Story | Estado | Evidência |
 |---|---|---|
 | 0-01 | **fechada** (14:40–14:46, ~6 min) | `pre_requisito` exit 0 remedido no `main`; `reviews/0-01.md` sem bloqueantes; raiz `cb1bff4` + `0759a7f`, backend `e60799f`, frontend `ce18bd6` |
-| 0-05 | QA `7ed1b96` vermelho (exit 127, sem build) · Dev `5b29975`: 7/7 verdes **no relato do Dev** | **remedição do Orquestrador falhou por ambiente** (Docker somente leitura): suíte inexecutável, não vermelha |
-| 0-14 | **fechada** (14:49–15:10, ~21 min) · QA `2c46456` · Dev `0e63a74` · remedido: 5/5 verdes, exit 0 | `reviews/0-14.md` sem bloqueantes; Registro da story a preencher (Planejador) |
+| 0-05 | **fechada** (14:49–15:20) · QA `7ed1b96` · Dev `5b29975` · remedido 15:12: 7/7, exit 0 | `reviews/0-05.md` sem bloqueantes; N1 (teste de fuso em UTC) em correção pelo Dev; N2 resolvido na emenda do ADR 0001; N3/N4 baixos |
+| 0-14 | **fechada** (14:49–15:10, ~21 min) · QA `2c46456` · Dev `0e63a74` · remedido: 5/5 verdes, exit 0 | `reviews/0-14.md` sem bloqueantes; Registro a preencher (Planejador). N1 Node corrigido: QA `1021044`, Dev `2c0a12c`, remedido 5/5, 0 EBADENGINE |
 | 0-02 | DevOps: arquivos prontos, **sem commit** | bloqueada: Docker somente leitura (disco do Mac 99%, 2,1 GiB livres) |
 
 Não bloqueantes da 0-14 (`reviews/0-14.md`), que vão para stories seguintes:
