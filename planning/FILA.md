@@ -135,4 +135,4 @@ confere quando ele aparecer.
 **Para a COLHEITA:** (1) o Revisor da 0-17 rodou sabotagens no `frontend/` real quando o clone
 sumiu (desfeito, sem perda): sabotagem só em clone, e conferir o `cd` antes. (2) dois agentes
 rodando `npm ci` no mesmo `frontend/node_modules` se atropelam: não paralelizar a suíte do
-frontend. (3) clones no scratchpad compartilhado somem entre agentes, e um `cd` que falha roda o comando no lugar errado (dois Revisores hoje): cada agente usa um diretório único e aborta se o `cd` falhar. (4) `rclone --checksum` sobre remote `crypt` compara só o tamanho (0-03).
+frontend. (3) clones no scratchpad compartilhado somem entre agentes, e um `cd` que falha roda o comando no lugar errado (dois Revisores hoje): cada agente usa um diretório único e aborta se o `cd` falhar. (4) não apagar arquivos do scratchpad por curinga (`rm *.log`): é compartilhado entre agentes. (5) `rclone --checksum` sobre remote `crypt` compara só o tamanho (0-03).
