@@ -25,7 +25,6 @@ um.
 
 | Identificador | O que bloqueia | Quem decide |
 |---|---|---|
-| plugins e `.claude/settings.json` | rodar os papéis como agentes do kit | Pedro |
 | ADR 0001 | `comandos` e caminhos de escrita de QA e Dev | Arquiteto, aceito pelo Pedro |
 | P-07 (spec) | o prazo do projeto | Akeel |
 | P-01 a P-06 (spec) | AUT, WPP, PRP, RPT, PRJ, MIG | Akeel |

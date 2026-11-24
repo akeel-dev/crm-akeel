@@ -1,0 +1,24 @@
+{
+  "env": {
+    "PONYTAIL_DEFAULT_MODE": "full",
+    "PONYTAIL_SUBAGENT_MATCHER": "(^|:)(dev|revisor)$"
+  },
+  "enabledPlugins": {
+    "time-padrao@time-padrao": true,
+    "ponytail@ponytail": true
+  },
+  "extraKnownMarketplaces": {
+    "time-padrao": {
+      "source": {
+        "source": "directory",
+        "path": "/Users/pedro/Desktop/time-padrao"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      }
+    }
+  }
+}
