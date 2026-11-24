@@ -124,7 +124,7 @@ confere quando ele aparecer.
 | qa → dev → revisor | 0-09 login BFF (backend, rigor completo) | em voo (QA) |
 | qa → dev | 0-18 cliente TS do contrato (frontend) | 0-09 |
 | qa → dev | 0-10 a 0-13 (backend: jobs, e-mail, eventos, arquivos) | 0-09 (mesmo repositório, em série) |
-| devops | 0-04 homologação local | 0-07 ✓, 0-10, 0-15 ✓, 0-20 |
+| devops | 0-04 homologação local (atenção: o `ambiente-local.md` exporta `CRM_DB_PASSWORD`/`CRM_STORAGE_*`, que o backend não lê; o backend lê `SPRING_DATASOURCE_*` — ver `docs/operacao/variaveis-backend.md`) | 0-07 ✓, 0-10, 0-15 ✓, 0-20 |
 
 ### Em voo
 
