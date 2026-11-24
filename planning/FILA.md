@@ -124,6 +124,7 @@ confere quando ele aparecer.
 | qa → dev → revisor | 0-09 login BFF (backend, rigor completo) | em voo (QA) |
 | qa → dev | 0-18 cliente TS do contrato (frontend) | 0-09 |
 | qa → dev | 0-10 a 0-13 (backend: jobs, e-mail, eventos, arquivos) | 0-09 (mesmo repositório, em série) |
+| qa | Keycloak de teste compartilhado (§25): medir, aplicar só sem impacto negativo | 0-10 (backend em série) |
 | devops | 0-04 homologação local | 0-07 ✓, 0-10, 0-15 ✓, 0-20 |
 
 ### Em voo
