@@ -37,7 +37,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 Nada.
 
-## 2026-11-24 (tarde) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
+## 2026-11-24 (tarde) — substituída pela seção abaixo
 
 **Onde paramos:** o Arquiteto escreveu o `docs/adr/0001-stack.md` (**proposto**) e um
 `SISTEMA.md` mínimo. Ele recomenda **db-scheduler** para jobs e **Garage** (nó único)
@@ -137,3 +137,46 @@ confere quando ele aparecer.
 sumiu (desfeito, sem perda): sabotagem só em clone, e conferir o `cd` antes. (2) dois agentes
 rodando `npm ci` no mesmo `frontend/node_modules` se atropelam: não paralelizar a suíte do
 frontend. (3) clones no scratchpad compartilhado somem entre agentes, e um `cd` que falha roda o comando no lugar errado (dois Revisores hoje): cada agente usa um diretório único e aborta se o `cd` falhar. (4) não apagar arquivos do scratchpad por curinga (`rm *.log`): é compartilhado entre agentes. (5) `rclone --checksum` sobre remote `crypt` compara só o tamanho (0-03).
+
+## 2026-11-24 (noite, 19:00) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
+
+**Onde paramos:** o Pedro pediu para parar os agentes depois das tarefas em voo. Nenhum
+agente rodando. Onda 0 com **13/20 fechadas** (0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-14,
+0-15, 0-16, 0-17, 0-18, 0-19). Tudo commitado e publicado nos três repositórios.
+
+**Última medição (Orquestrador, 19:00, macOS):** backend `./mvnw -B verify` → 117/117, exit 0
+(HEAD `872f94f`); frontend `npm test` → 239/239 (HEAD `9d37f99`). A `comandos.suite` do raiz
+**fica vermelha no `cmp`** até a cópia do contrato ser refeita no frontend (passo 1 abaixo):
+o backend mudou o contrato do `POST /logout` (`59c1156`, `4c95c03`).
+
+### Para mostrar ao humano
+
+Nada pendente com o Pedro. Decisões do dia: `decisoes/2026-11-24.md` §1–§26 (a §25 foi descartada).
+Regra que vale em todo despacho: código sem comentários (§17/§18, também no `CLAUDE.md`).
+
+### Próxima ação, em ordem
+
+| # | Papel | Ação | Detalhe |
+|---|---|---|---|
+| 1 | dev (frontend) | `npm run copy:api` + `npm test` + commit | o cookie `XSRF-TOKEN` agora é `required: false` (`conflitos/dev-logout-cookie-obrigatorio.md`); o `cmp` volta a 0. Isso fecha a **0-09** |
+| 2 | revisor | reconferir a **0-10** num clone fixado em `872f94f` | B1 (modo inválido falha) e N1 (saúde do worker). Ponto do Dev: a validação no contexto mora no bean do scheduler (`db-scheduler.enabled=false` a pularia) |
+| 3 | planejador | Registros finais de 0-09 e 0-10 | evidência em `planning/arquivo/0-09-sabotagens.md` e `0-10-arquiteto.md`; QA `66218ed`/`ea8ebbf`, Dev `59c1156`/`4c95c03`/`872f94f` |
+| 4 | qa → dev → revisor | **0-11** e-mail (backend) | já inclui a named interface de `platform.jobs` (critério 9) |
+| 5 | qa → dev → revisor | 0-12 eventos, 0-13 arquivos (backend, em série) | |
+| 6 | qa → dev → revisor | 0-20 e2e do login (frontend) | depende de 0-09 fechada e do compose |
+| 7 | devops | 0-04 homologação local | último; ver a nota de variáveis em `docs/operacao/variaveis-backend.md` |
+| 8 | orquestrador | `/portao 0` | reescrever o `ESTADO.md`; levar as lições abaixo para a `COLHEITA.md` (`/colher`) |
+
+### Para a COLHEITA (lições do dia)
+
+1. Sabotagem só em clone de diretório único; abortar se o `cd` falhar (dois Revisores rodaram no lugar errado).
+2. Não apagar arquivos do scratchpad por curinga: é compartilhado.
+3. Dois agentes com `npm ci` no mesmo `frontend/` se atropelam: não paralelizar a suíte do frontend.
+4. Commit de testes vermelhos quebra a compilação do `main` do backend: o Revisor da story anterior mede num clone fixado no commit dela.
+5. `rclone --checksum` sobre remote `crypt` compara só o tamanho.
+6. No Spring Boot 4.2, `server.request.header.forwarded.strategy=native` não existe (é `web-server`).
+7. Parâmetro de cookie `required: true` no OpenAPI vira parâmetro obrigatório no cliente gerado; cookie que o navegador envia é `required: false`.
+
+### Em voo
+
+Nada.
