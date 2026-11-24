@@ -35,11 +35,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-
-**Com o Pedro:** (1) perguntar à TI se a conta `crm-api` do realm real consegue chamar a Admin API (o token precisa da audiência do escopo `kc-admin-api`); (2) **revogar o token antigo do GitHub** (o novo, com `repo` + `workflow` + `write:packages`, já está em uso; o antigo ainda responde 200).
-
-**Para a COLHEITA:** o Revisor da 0-17 rodou sabotagens no `frontend/` real quando o clone sumiu (ficou em HEAD destacado; desfeito, sem perda). Sabotagem só em clone, e conferir o `cd` antes.
-**Também para a COLHEITA:** dois agentes rodando `npm ci` no mesmo `frontend/node_modules` se atropelam (reviews/0-15.md). Não paralelizar a suíte do frontend.
+Nada.
 
 ## 2026-11-24 (tarde) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -123,15 +119,18 @@ confere quando ele aparecer.
 
 | Papel | Próxima ação | Bloqueada por |
 |---|---|---|
-| devops | 0-02 (ambiente local: compose) — trilha R | nada |
-| qa → dev | 0-05 (backend Java 25 + Postgres) — trilha B | nada |
-| qa → dev | 0-14 (esqueleto do frontend) — trilha F | nada |
-| orquestrador | criar os remotos `crm-akeel-backend` e `crm-akeel-frontend` no GitHub | autorização do Pedro |
+| qa → dev → revisor | 0-09 login BFF (backend, rigor completo) | em voo (QA) |
+| qa → dev | 0-18 cliente TS do contrato (frontend) | 0-09 |
+| qa → dev | 0-10 a 0-13 (backend: jobs, e-mail, eventos, arquivos) | 0-09 (mesmo repositório, em série) |
+| devops | 0-04 homologação local | 0-07 ✓, 0-10, 0-15 ✓, 0-20 |
 
 ### Em voo
 
+- qa: 0-09.
 
-**Com o Pedro:** (1) perguntar à TI se a conta `crm-api` do realm real consegue chamar a Admin API (o token precisa da audiência do escopo `kc-admin-api`); (2) **revogar o token antigo do GitHub** (o novo, com `repo` + `workflow` + `write:packages`, já está em uso; o antigo ainda responde 200).
+**Com o Pedro:** confirmar a cor de erro proposta em §20 (`#b42318` / `#f97066`).
 
-**Para a COLHEITA:** o Revisor da 0-17 rodou sabotagens no `frontend/` real quando o clone sumiu (ficou em HEAD destacado; desfeito, sem perda). Sabotagem só em clone, e conferir o `cd` antes.
-**Também para a COLHEITA:** dois agentes rodando `npm ci` no mesmo `frontend/node_modules` se atropelam (reviews/0-15.md). Não paralelizar a suíte do frontend.
+**Para a COLHEITA:** (1) o Revisor da 0-17 rodou sabotagens no `frontend/` real quando o clone
+sumiu (desfeito, sem perda): sabotagem só em clone, e conferir o `cd` antes. (2) dois agentes
+rodando `npm ci` no mesmo `frontend/node_modules` se atropelam: não paralelizar a suíte do
+frontend. (3) `rclone --checksum` sobre remote `crypt` compara só o tamanho (0-03).
