@@ -1,6 +1,6 @@
 # ADR 0003 — A sessão da BFF, com os tokens, fica no PostgreSQL pelo Spring Session JDBC
 
-Dono: Arquiteto. Data: 2026-11-24. Estado: aceito pelo humano em 2026-11-24 (planning/decisoes/2026-11-24.md §11); emendas de 2026-11-24 (§14 e §15)
+Dono: Arquiteto. Data: 2026-11-24. Estado: aceito pelo humano em 2026-11-24 (planning/decisoes/2026-11-24.md §11); emendas de 2026-11-24 (§14, §15 e a correção do valor de `forwarded.strategy`)
 
 Responde a **Q-ARQ-2** da Onda 0 (trava a story 0-09).
 
@@ -82,7 +82,8 @@ do realm é ponto de partida: o time pode pedir mudanças. Evidência conferida 
    `client_id`: o mesmo caminho serve ao `crm-bff` e ao `crm-bff-dev`, e trocar de cliente
    não muda a URL cadastrada. O `redirect_uri` é montado com `{baseUrl}`, então, atrás do
    Tunnel e do proxy reverso, a `api` precisa ver o host e o esquema originais:
-   `server.request.header.forwarded.strategy=native`, e o proxy repassa `Host` e
+   `server.request.header.forwarded.strategy=web-server` (corrigido em 2026-11-24; ver a emenda
+   logo abaixo), e o proxy repassa `Host` e
    `X-Forwarded-Proto: https`. Sem isso, o Spring monta `http://…` e o Keycloak devolve 400.
    **Pedido à TI:** cadastrar também `https://crm.akeel.com.br/` (exato, sem curinga), que é o
    `redirect_uri` do convite e o `post_logout_redirect_uri` do logout. Hoje só o callback está
@@ -150,6 +151,41 @@ do realm é ponto de partida: o time pode pedir mudanças. Evidência conferida 
    O que fica exposto: nome e e-mail do usuário (claims do ID token) numa URL, que pode cair
    no histórico do navegador e em log de acesso. A alternativa mais barata, se isso incomodar,
    está nas alternativas abaixo.
+
+**Emenda de 2026-11-24 (valor de `forwarded.strategy`; `conflitos/qa-0-09-forwarded-strategy.md`):**
+
+O item 1 da emenda §15 mandava `server.request.header.forwarded.strategy=native`. No Boot
+4.2.0 esse valor não existe e a aplicação não sobe (`No enum constant
+…ForwardedHeaderStrategy.native`, execução do QA no conflito). `native` era valor da
+propriedade antiga `server.forward-headers-strategy`. **O valor certo é `web-server`.**
+
+| Fato | Evidência |
+|---|---|
+| A propriedade nova é do tipo `ForwardedHeaderStrategy`, com as constantes `WEB_SERVER`, `FRAMEWORK` e `NONE` | ✅ leitura: `javap` de `org.springframework.boot.web.server.autoconfigure.ForwardedHeaderStrategy`, `spring-boot-web-server-4.2.0.jar` |
+| `server.forward-headers-strategy` está depreciada desde a 4.2.0, com remoção na 4.4.0, e aponta para `server.request.header.forwarded.strategy` | ✅ leitura: `META-INF/spring-configuration-metadata.json` do mesmo jar |
+| O antigo `NATIVE` equivale a `WEB_SERVER`: `ForwardedHeaderStrategy.adaptDeprecated` mapeia `NATIVE → WEB_SERVER`, `FRAMEWORK → FRAMEWORK`, `NONE → NONE` | ✅ leitura: `javap -c` de `adaptDeprecated` e do `$SwitchMap` em `ForwardedHeaderStrategy$1`, mesmo jar |
+| Com `web-server`, o servidor embutido (Tomcat, via `spring-boot-starter-webmvc`) trata os cabeçalhos no `RemoteIpValve`, que só confia em quem casa com `server.tomcat.remoteip.internal-proxies` | ✅ leitura: metadados de `spring-boot-tomcat-4.2.0.jar` (`internal-proxies`, `trusted-proxies`, `protocol-header`) |
+
+**Por que `web-server` e não `framework`:**
+
+- É a tradução exata do que o ADR decidiu (`native`), confirmada no fonte. Não é decisão nova.
+- **Confiança no remetente.** O `RemoteIpValve` só aplica `X-Forwarded-*` quando a conexão vem
+  de um proxy interno (`internal-proxies`; o padrão do Tomcat cobre as faixas privadas e o
+  loopback, onde ficam o proxy e o `cloudflared` na VPS). O `ForwardedHeaderFilter` do
+  `framework` aplica os cabeçalhos de **qualquer** remetente. A tabela "Guardado por" já diz
+  "vindos de IP de proxy confiável"; com `framework`, um cliente que chegasse direto à `api`
+  forjaria host e esquema do `redirect_uri` e o IP de origem.
+- **Alcance.** No servidor, o esquema e o IP corrigidos valem para tudo que vem depois
+  (`request.isSecure()`, log de acesso do Tomcat, cookie `Secure`). O filtro só corrige o que
+  passa por ele, e depende de ficar antes do filtro do Spring Security.
+
+Alternativa mais barata considerada: deixar a propriedade sem valor. Não serve: sem valor, a
+estratégia é deduzida da plataforma de nuvem, e numa VPS não há nenhuma (fato da tabela da
+§15). O teste de sabotagem do callback já cobre esse caso.
+
+O que muda: a troca de `native` por `web-server` no item 1 da §15 e nas consequências para o
+Dev. Os testes do QA conferem o comportamento (callback com o host público), não o nome do
+valor, e não mudam. A story 0-09 cita `native` em quatro lugares; a troca lá é do Planejador.
 
 **Alternativas desta emenda:**
 
@@ -276,7 +312,7 @@ da autoconfiguração, sem import no nosso código, então só o teste de compor
   é aceitável, erro 500 não). Verificar na primeira atualização de versão menor.
 - **Emenda §15:**
   - Nenhuma mudança em `time.yml`.
-  - Dev (0-09): `registrationId` `keycloak`, `server.request.header.forwarded.strategy=native`,
+  - Dev (0-09): `registrationId` `keycloak`, `server.request.header.forwarded.strategy=web-server`,
     `client-secret` de `${KEYCLOAK_CLIENT_SECRET}` e nada de `oidcLogout().backChannel()`.
   - DevOps: um host só (`crm.akeel.com.br`); o proxy roteia os quatro prefixos da BFF e
     repassa `Host` e `X-Forwarded-Proto`; o segredo `KEYCLOAK_CLIENT_SECRET` como segredo
