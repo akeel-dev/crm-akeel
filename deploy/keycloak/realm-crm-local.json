@@ -1,0 +1,348 @@
+{
+  "realm": "${KEYCLOAK_REALM}",
+  "displayName": "CRM Akeel (local, dados fictícios)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "registrationEmailAsUsername": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "verifyEmail": false,
+  "resetPasswordAllowed": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 28800,
+  "ssoSessionMaxLifespan": 2592000,
+  "revokeRefreshToken": false,
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "crm-local@example.com",
+    "fromDisplayName": "CRM Akeel (local)"
+  },
+  "roles": {
+    "realm": [
+      {
+        "name": "visualizador",
+        "description": "Perfil Visualizadores"
+      },
+      {
+        "name": "vendedor",
+        "description": "Perfil Vendedores (inclui visualizador)",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "visualizador"
+          ]
+        }
+      },
+      {
+        "name": "gestor",
+        "description": "Perfil Gestores (inclui vendedor e visualizador)",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "vendedor",
+            "visualizador"
+          ]
+        }
+      },
+      {
+        "name": "admin",
+        "description": "Perfil Administradores (inclui gestor, vendedor e visualizador)",
+        "composite": true,
+        "composites": {
+          "realm": [
+            "gestor",
+            "vendedor",
+            "visualizador"
+          ]
+        }
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "Perfis",
+      "path": "/Perfis",
+      "subGroups": [
+        {
+          "name": "Administradores",
+          "path": "/Perfis/Administradores",
+          "realmRoles": [
+            "admin"
+          ]
+        },
+        {
+          "name": "Gestores",
+          "path": "/Perfis/Gestores",
+          "realmRoles": [
+            "gestor"
+          ]
+        },
+        {
+          "name": "Vendedores",
+          "path": "/Perfis/Vendedores",
+          "realmRoles": [
+            "vendedor"
+          ]
+        },
+        {
+          "name": "Visualizadores",
+          "path": "/Perfis/Visualizadores",
+          "realmRoles": [
+            "visualizador"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Equipes",
+      "path": "/Equipes",
+      "subGroups": [
+        {
+          "name": "Comercial",
+          "path": "/Equipes/Comercial"
+        }
+      ]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "crm-bff",
+      "name": "CRM BFF (login, confidencial)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${CRM_BFF_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": false,
+      "redirectUris": [
+        "http://localhost:*"
+      ],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:*",
+        "backchannel.logout.url": "",
+        "backchannel.logout.session.required": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "frontchannel.logout.url": ""
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "basic",
+        "profile",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "offline_access"
+      ],
+      "protocolMappers": [
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "groups",
+            "full.path": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience crm-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "crm-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "crm-api",
+      "name": "CRM API (conta de serviço e audiência)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${CRM_API_CLIENT_SECRET}",
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [],
+      "webOrigins": [],
+      "defaultClientScopes": [
+        "acr",
+        "basic",
+        "profile",
+        "email"
+      ]
+    },
+    {
+      "clientId": "crm-web",
+      "name": "CRM Web (público, só paridade com o real; o CRM não loga por ele, P-18)",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "basic",
+        "profile",
+        "email"
+      ],
+      "protocolMappers": [
+        {
+          "name": "roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "roles",
+            "multivalued": "true",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "claim.name": "groups",
+            "full.path": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        },
+        {
+          "name": "audience crm-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "crm-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true",
+            "introspection.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "ana.vendedora@akeel.com.br",
+      "email": "ana.vendedora@akeel.com.br",
+      "firstName": "Ana",
+      "lastName": "Vendedora (fictícia)",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${CRM_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "groups": [
+        "/Perfis/Vendedores",
+        "/Equipes/Comercial"
+      ]
+    },
+    {
+      "username": "bruno.naoverificado@akeel.com.br",
+      "email": "bruno.naoverificado@akeel.com.br",
+      "firstName": "Bruno",
+      "lastName": "Não Verificado (fictício)",
+      "enabled": true,
+      "emailVerified": false,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${CRM_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "groups": []
+    },
+    {
+      "username": "carla.externa@example.com",
+      "email": "carla.externa@example.com",
+      "firstName": "Carla",
+      "lastName": "Externa (fictícia)",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${CRM_TEST_USER_PASSWORD}",
+          "temporary": false
+        }
+      ],
+      "groups": []
+    },
+    {
+      "username": "service-account-crm-api",
+      "enabled": true,
+      "serviceAccountClientId": "crm-api",
+      "clientRoles": {
+        "realm-management": [
+          "view-users",
+          "manage-users",
+          "query-groups",
+          "query-users"
+        ]
+      }
+    }
+  ]
+}

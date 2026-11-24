@@ -1,0 +1,17 @@
+# Dono: DevOps (time.yml, escrita.devops). Story 0-02.
+# Os segredos do ambiente local: um arquivo por nome, em deploy/local/secrets/
+# (ignorado pelo git), montado pelo compose como segredo do Docker (RF-SEC-03).
+# Os valores abaixo são FICTÍCIOS e não servem para nada: o script
+# deploy/local/gerar-segredos.sh gera um valor aleatório para cada nome.
+# Formato: nome=valor-ficticio  (o tipo do valor gerado vem do nome)
+postgres_password=ficticio-troque
+crm_db_password=ficticio-troque
+keycloak_db_password=ficticio-troque
+keycloak_admin_password=ficticio-troque
+crm_bff_client_secret=ficticio-troque
+crm_api_client_secret=ficticio-troque
+test_user_password=ficticio-troque
+garage_rpc_secret=0000000000000000000000000000000000000000000000000000000000000000
+garage_admin_token=ficticio-troque
+garage_s3_access_key_id=GK000000000000000000000000
+garage_s3_secret_access_key=0000000000000000000000000000000000000000000000000000000000000000
