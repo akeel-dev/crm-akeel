@@ -158,7 +158,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 
 | # | Papel | Ação | Detalhe |
 |---|---|---|---|
-| 1 | dev (frontend) | `npm run copy:api` + `npm test` + commit | o cookie `XSRF-TOKEN` agora é `required: false` (`conflitos/dev-logout-cookie-obrigatorio.md`); o `cmp` volta a 0. Isso fecha a **0-09** |
+| 1 ✅ | dev (frontend) | feito: `299c66a`, `cmp` 0, 239/239; **0-09 fechada** | o cookie `XSRF-TOKEN` agora é `required: false` (`conflitos/dev-logout-cookie-obrigatorio.md`); o `cmp` volta a 0. Isso fecha a **0-09** |
 | 2 | revisor | reconferir a **0-10** num clone fixado em `872f94f` | B1 (modo inválido falha) e N1 (saúde do worker). Ponto do Dev: a validação no contexto mora no bean do scheduler (`db-scheduler.enabled=false` a pularia) |
 | 3 | planejador | Registros finais de 0-09 e 0-10 | evidência em `planning/arquivo/0-09-sabotagens.md` e `0-10-arquiteto.md`; QA `66218ed`/`ea8ebbf`, Dev `59c1156`/`4c95c03`/`872f94f` |
 | 4 | qa → dev → revisor | **0-11** e-mail (backend) | já inclui a named interface de `platform.jobs` (critério 9) |
