@@ -187,7 +187,7 @@ Nada.
 agente rodando.** Tudo commitado e publicado nos três repositórios (raiz, `backend/`, `frontend/`).
 O estado completo está no `ESTADO.md`; a evidência do dia, em `planning/arquivo/0-11-e-0-20-evidencia.md`.
 
-**Onda 0 (fundação):** 19/20 fechadas (0-11, 0-12 e 0-13 fecharam em 25/11); falta a 0-04 — 0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-09, 0-10,
+**Onda 0 (fundação): 20/20 stories fechadas** em 25/11. Próximo: `/portao 0` — 0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-09, 0-10,
 0-14, 0-15, 0-16, 0-17, 0-18, 0-19, 0-20. A **0-11** (e-mail) foi aprovada pelo Revisor (`reviews/0-11.md`,
 PASSA COM RESSALVAS); falta só ele conferir a regra de arquitetura `65c7928`, que entrou depois.
 Faltam **0-12** (eventos), **0-13** (arquivos), **0-04** (homologação local) e o **portão**.
@@ -228,7 +228,7 @@ e roda `sh deploy/local/verificar.sh` (exit 0) e o `comandos.pre_requisito`.
 | 6 | devops | 0-11 N3/N4: `MAIL_*` em `docs/operacao/variaveis-backend.md`; `MAIL_EHLO_NAME` obrigatório na VPS; o comando de verificação de e-mail e a porta da saúde | não bloqueia |
 | 7 ✅ | qa → dev → revisor | **0-12 fechada** | QA `5dc05e9`, Dev `9126384`, Arquiteto `4e0d7bb` (regras do critério 7, com sabotagem); remedido 152/152 (5:29 min); evidência em `planning/arquivo/0-12-evidencia.md` |
 | 8 ✅ | qa → dev → revisor | **0-13 fechada** | QA `d194a71`, Dev `5e501d7`, Arquiteto critério 8 ✅, `reviews/0-13.md` sem bloqueantes, 168/168. Antes da 0-04: N1 (nada aplica o CORS do bucket) e N3 (tamanho de parte sem validação) → QA → Dev; N2 (docs de `CRM_STORAGE_*`) → DevOps. N4/N5 (checksum `WHEN_REQUIRED` e `url-connection-client` sem necessidade medida) ficam em `docs/arquitetura/atalhos.md` |
-| 9 | devops | **0-04** homologação local | por último |
+| 9 ✅ | devops | **0-04 fechada** | DevOps `ddabcb5` + `a54224a`; `reviews/0-04.md` sem bloqueantes; homologação e e2e verdes. Achados N1–N4/N7 viram condições para liberar o deploy real (`decisoes §29`) |
 | 10 | orquestrador | `/portao 0`, depois `/colher` | reescrever o `ESTADO.md`; definir gatilho para os 5 atalhos sem gatilho em `docs/arquitetura/atalhos.md` ("ao menos uma vez", saúde de e-mail desligada, dois contadores de tentativa, sessão relida, tela em branco) |
 
 Os passos 1–6 podem rodar em paralelo, respeitando um escritor por repositório (1 no backend; 3 só lê;
@@ -256,4 +256,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-- Correções da 0-13 feitas: N2 docs (`061284b`), QA N1/N3 (`c799de5`), Dev (`46e767a`). Suíte do raiz exit 0 (backend 177/177, frontend 239/239). 0-04 (DevOps) em voo, despachada em 25/11.
+- Correções da 0-13 feitas: N2 docs (`061284b`), QA N1/N3 (`c799de5`), Dev (`46e767a`). Suíte do raiz exit 0 (backend 177/177, frontend 239/239). 0-04 fechada. Próximo: portão da Onda 0.

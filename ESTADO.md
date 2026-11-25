@@ -3,7 +3,7 @@
 Dono: Orquestrador. **Reescrito, não acrescido**, a cada fechamento de sessão ou portão. Limite:
 `limites.estado_linhas` do `time.yml`.
 
-Atualizado: 2026-11-25 11:15 · Onda: **0 (fundação), 19/20 stories fechadas** · Máquina: macOS (Darwin 25.6.0)
+Atualizado: 2026-11-25 11:15 · Onda: **0 (fundação), 20/20 stories fechadas — falta o portão** · Máquina: macOS (Darwin 25.6.0)
 
 ## Onde estamos
 
@@ -23,6 +23,7 @@ O que funciona hoje (medido):
 - **Arquivos** por URL pré-assinada no Garage (`platform.storage`, multipart, CORS).
 - **E-mail do sistema** por fila, 5 novas tentativas, relay configurável (nunca o real nos testes).
 - **Backup** cifrado (pgBackRest + rclone), destino trocável por configuração, falha fechado.
+- **Homologação local** pelo mesmo caminho do deploy (`deploy/deploy.sh homologacao-local`), com o e2e verde contra ela; workflow de produção pronto, só manual (§28).
 - **Ambiente local** com um comando (`deploy/local/`), **CI verde** no GitHub nos dois repositórios.
 
 ## Última medição
