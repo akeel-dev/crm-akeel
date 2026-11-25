@@ -158,12 +158,18 @@ usuario() { # email verificado_esperado
   u=$(adm "/users?email=$1&exact=true" | jq -e '.[0]') || falha 3 "usuário $1 ausente"
   echo "$u" | jq -e --arg e "$1" --argjson v "$2" '.username == $e and .emailVerified == $v and .enabled' >/dev/null ||
     falha 3 "usuário $1: esperado username=e-mail e emailVerified=$2"
+  echo "$u" | jq -e '(.requiredActions // []) == []' >/dev/null ||
+    falha 3 "usuário $1 com requiredActions: $(echo "$u" | jq -c .requiredActions)"
+  perfil=$(echo "$u" | jq -c '{username, email, firstName, lastName}')
+  cod=$(curl -s -o /dev/null -w '%{http_code}' -X PUT -H "Authorization: Bearer $token" \
+    -H 'Content-Type: application/json' --data "$perfil" "$kc/admin/realms/$realm/users/$(echo "$u" | jq -r .id)")
+  [ "$cod" = 204 ] || falha 3 "usuário $1: o perfil $perfil não passa na validação do user profile ($cod; login trava em VERIFY_PROFILE)"
   echo "$u" | jq -r .id
 }
 ana=$(usuario ana.vendedora@akeel.com.br true)
 usuario bruno.naoverificado@akeel.com.br false >/dev/null
 usuario carla.externa@example.com true >/dev/null
-ok 3 "usuários: @akeel verificado, @akeel não verificado, outro domínio"
+ok 3 "usuários: @akeel verificado, @akeel não verificado, outro domínio; sem requiredActions; perfis válidos no user profile"
 adm "/users/$ana/groups" | jq -e '[.[].path] | index("/Perfis/Vendedores") and index("/Equipes/Comercial")' >/dev/null ||
   falha 3 "o verificado não está em /Perfis/Vendedores e /Equipes/Comercial"
 ok 3 "o verificado está em /Perfis/Vendedores e /Equipes/Comercial"

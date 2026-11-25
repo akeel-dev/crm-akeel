@@ -285,7 +285,7 @@
       "username": "ana.vendedora@akeel.com.br",
       "email": "ana.vendedora@akeel.com.br",
       "firstName": "Ana",
-      "lastName": "Vendedora (fictícia)",
+      "lastName": "Vendedora Fictícia",
       "enabled": true,
       "emailVerified": true,
       "credentials": [
@@ -304,7 +304,7 @@
       "username": "bruno.naoverificado@akeel.com.br",
       "email": "bruno.naoverificado@akeel.com.br",
       "firstName": "Bruno",
-      "lastName": "Não Verificado (fictício)",
+      "lastName": "Não Verificado Fictício",
       "enabled": true,
       "emailVerified": false,
       "credentials": [
@@ -320,7 +320,7 @@
       "username": "carla.externa@example.com",
       "email": "carla.externa@example.com",
       "firstName": "Carla",
-      "lastName": "Externa (fictícia)",
+      "lastName": "Externa Fictícia",
       "enabled": true,
       "emailVerified": true,
       "credentials": [
