@@ -370,3 +370,41 @@ Rodar na raiz, nesta ordem, com data e máquina:
 
 <escrito pelo Orquestrador no /portao: medições com data e máquina, dívida do Ponytail, o
 que ficou para depois>
+
+---
+
+## Fechamento (portão, 2026-11-25 17:36, MacBook-Air-de-Maria, Orquestrador)
+
+**A Onda 0 fecha: 20/20 stories fechadas, todas com revisão em `reviews/` e sem bloqueante aberto.**
+
+### Medições
+
+| Item | Comando | Resultado |
+|---|---|---|
+| 1. Pré-requisito | `comandos.pre_requisito` | exit 0 |
+| 2. Suíte (main limpo: raiz `e26b97a`, backend `46e767a`, frontend `63752e9`) | `comandos.suite` (com `caffeinate -i`) | **exit 0** — backend 177/177, **0 pulados**, 8:48 min; frontend 239/239; `cmp` do contrato 0; portabilidade do backup ok |
+| 2a. Primeira rodada | `comandos.suite` | exit 1: `StorageConfigurationRequiredTest[secret-key]` estourou o prazo porque **o Mac dormiu** de 17:01:35 a 17:16:54 (`pmset -g log`: "Idle Sleep"). Ambiente, não código. |
+| 3. Arquitetura | `comandos.arquitetura` | exit 0 — 16/0 (Modularity 2, StorageConfig 2, Architecture 12); módulos: identity, platform |
+| e2e (fora da suíte) | `deploy/homologacao/e2e.sh` | 8/8 contra a homologação local (0-04); 160/160 em repetição (0-20) |
+| 4. Stories | `reviews/0-01..0-20.md` | 20/20 com veredito final PASSA ou PASSA COM RESSALVAS (0-12 reconferida no portão) |
+| 5. Cobertura | seção "Cobertura" acima | todo item com story fechada ou "fora desta onda" com motivo |
+| 6. Dívida | `docs/arquitetura/atalhos.md` | nenhum `shortcut:` no código (§17); 11 atalhos estavam sem gatilho → gatilhos em `decisoes §30` e `§31`; 0 sem gatilho |
+| 7. Diagrama | `docs/arquitetura/modulos.md` | atualizado e conferido com o teste de arquitetura em `46e767a` (Arquiteto, `85e01ef`) |
+| 8. Limites | `wc -l` | FILA 259/300, ESTADO 52/150 (antes do arquivamento) |
+
+### Dívida (vai para a Onda 1 ou para a liberação do deploy)
+
+- **Pré-requisito da Onda 1:** `platform.events` e `platform.mail` sem `@NamedInterface` — a primeira story de
+  negócio que publicar evento ou mandar e-mail os expõe (`decisoes §31`, item 6).
+- **Dinheiro em payload de evento** pode voltar como `Double` (`reviews/0-12.md` N8): teste na primeira story com valor.
+- **Condições para liberar o deploy real** (`decisoes §29`): troca sem parada, backup em produção, URL
+  pré-assinada pública, promoção de imagem, e2e no runner do GitHub.
+- **Testes sensíveis a tempo** (e-mail, eventos, armazenamento): falham sob carga ou se a máquina dormir. Rodar
+  a suíte com `caffeinate -i` e nunca duas suítes do backend ao mesmo tempo.
+- Atalhos com gatilho: `docs/arquitetura/atalhos.md`.
+
+### O que ficou para depois
+
+- Deploy real na VPS: espera o Pedro (§24); o workflow é só manual (§28).
+- Destino do backup (P-17), P-07 e P-01–P-06 com a Akeel; sessões de estudo do Pipedrive (§14.2 da spec).
+- Observabilidade (RNF-12): candidata à Onda 1 ou 2.
