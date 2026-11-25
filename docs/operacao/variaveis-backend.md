@@ -49,10 +49,25 @@ do Spring Boot, que lê do ambiente pelos nomes abaixo (ligação relaxada). O b
 | `SPRING_DATASOURCE_USERNAME` | sim | `crm` | o driver tenta sem usuário e a conexão é recusada |
 | `SPRING_DATASOURCE_PASSWORD` | sim, **segredo** | `"$(cat deploy/local/secrets/crm_db_password)"` | a autenticação no PostgreSQL falha na subida (Flyway e sessão conectam logo) |
 
-Atenção: o bloco "Rodar o backend e o frontend contra este ambiente" de
-`ambiente-local.md` exporta `CRM_DB_PASSWORD`, `CRM_STORAGE_ACCESS_KEY` e
-`CRM_STORAGE_SECRET_KEY`. **Nenhum dos três é lido pelo backend hoje** (grep em
-`backend/src/main` sem ocorrência). Para o banco valem os `SPRING_DATASOURCE_*` acima.
+## Arquivos (S3, `platform.storage`)
+
+Origem: story 0-13 (backend `5e501d7`), `reviews/0-13.md`, N2. Lidas por
+`StorageProperties` (`@ConfigurationProperties("crm.storage")`, `@Validated`), pela
+ligação relaxada do Spring: `CRM_STORAGE_PATH_STYLE` vira `crm.storage.path-style`. O
+api **e** o worker leem as mesmas; nenhuma das seis primeiras tem padrão.
+
+| Variável | Obrigatória | Exemplo local | Validação | Se faltar |
+|---|---|---|---|---|
+| `CRM_STORAGE_ENDPOINT` | sim | `http://localhost:3900` | `@NotNull URI` | a ligação de `crm.storage` falha e o contexto não sobe |
+| `CRM_STORAGE_REGION` | sim | `garage` | `@NotBlank` | idem |
+| `CRM_STORAGE_BUCKET` | sim | `crm-arquivos` (`S3_BUCKET` do `.env`) | `@NotBlank` | idem |
+| `CRM_STORAGE_PATH_STYLE` | sim | `true` (Garage) | `@NotNull Boolean` | idem |
+| `CRM_STORAGE_ACCESS_KEY` | sim, **segredo** | `"$(cat deploy/local/secrets/garage_s3_access_key_id)"` | `@NotBlank` | idem |
+| `CRM_STORAGE_SECRET_KEY` | sim, **segredo** | `"$(cat deploy/local/secrets/garage_s3_secret_access_key)"` | `@NotBlank` | idem |
+| `CRM_STORAGE_CORS_ORIGINS` | não | `http://localhost:5173` (lista separada por vírgula) | nenhuma | lista vazia. Só é usada por `applyBucketCors()`, que **ninguém chama hoje** (`reviews/0-13.md`, N1): definir a variável não aplica CORS no bucket |
+| `CRM_STORAGE_MULTIPART_PART_SIZE` | não | `5MB` | **nenhuma** | vale `5MB`. Não baixar: `0B` sobe e estoura no primeiro multipart, e o S3 exige 5 MiB por parte exceto a última (`reviews/0-13.md`, N3) |
+
+Não existe `CRM_DB_PASSWORD`: para o banco valem os `SPRING_DATASOURCE_*` acima.
 
 ## Modo de execução (opcionais)
 
@@ -120,6 +135,12 @@ export CRM_PUBLIC_URL=http://localhost:5173/
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/crm
 export SPRING_DATASOURCE_USERNAME=crm
 export SPRING_DATASOURCE_PASSWORD="$(cat deploy/local/secrets/crm_db_password)"
+export CRM_STORAGE_ENDPOINT=http://localhost:3900
+export CRM_STORAGE_REGION=garage
+export CRM_STORAGE_BUCKET=crm-arquivos
+export CRM_STORAGE_PATH_STYLE=true
+export CRM_STORAGE_ACCESS_KEY="$(cat deploy/local/secrets/garage_s3_access_key_id)"
+export CRM_STORAGE_SECRET_KEY="$(cat deploy/local/secrets/garage_s3_secret_access_key)"
 (cd backend && ./mvnw spring-boot:run)     # porta 8080
 ```
 
@@ -128,7 +149,7 @@ export SPRING_DATASOURCE_PASSWORD="$(cat deploy/local/secrets/crm_db_password)"
 - ✅ leitura: `application.yml` (quatro placeholders `KEYCLOAK_*`, sem `spring.datasource`),
   `SecurityConfig` (`@Value("${CRM_PUBLIC_URL}")`, `getRequiredProperty("KEYCLOAK_CLIENT_SECRET")`,
   `publicUrl + "acesso-recusado"`), `RunModes` e `RunModeConfig` (`crm.mode`, perfil `prod`).
-- ✅ execução: `grep -rniE 'datasource|CRM_DB|CRM_STORAGE|getRequiredProperty' backend/src/main`
+- ✅ execução (2026-11-24, antes da 0-13): `grep -rniE 'datasource|CRM_DB|CRM_STORAGE|getRequiredProperty' backend/src/main`
   só acha o `DataSourceAutoConfiguration` de `RunModes` e o `getRequiredProperty` do `SecurityConfig`.
 - ✅ leitura (2026-11-25): `application-prod.yml` (`MAIL_HOST`, `MAIL_PORT`,
   `MAIL_EHLO_NAME` sem padrão), `application.yml` (`${HOSTNAME:crm}`,
@@ -137,5 +158,11 @@ export SPRING_DATASOURCE_PASSWORD="$(cat deploy/local/secrets/crm_db_password)"
 - ⚠️ não medido aqui: o EHLO literal `${MAIL_EHLO_NAME}` foi medido pelo Revisor (sonda P1
   de `reviews/0-11.md`), não por mim; os ~25 min são cálculo (6 tentativas, 5 min), não
   cronometrados; o relay real não foi usado.
+- ✅ leitura (2026-11-25): `StorageProperties` no backend `5e501d7` (seis campos validados
+  sem padrão, `multipartPartSize` com `@DefaultValue("5MB")`, `corsOrigins` com lista
+  vazia); `grep applyBucketCors backend/src/main/java` só acha a declaração e a implementação.
+- ✅ execução (2026-11-25): o "Bloco local completo" acima, num clone do backend fixado em
+  `5e501d7`, contra o compose de pé: `/actuator/health` respondeu `200` (registro em
+  `ambiente-local.md`, "Como este roteiro foi provado").
 - ⚠️ não medido: as mensagens exatas de falha de cada ausência (o backend não foi subido
   sem cada variável).

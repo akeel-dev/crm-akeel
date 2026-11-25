@@ -99,24 +99,52 @@ Senha dos três: o conteúdo de `deploy/local/secrets/test_user_password`.
 
 ## Rodar o backend e o frontend contra este ambiente
 
-Exporte na shell (nunca em arquivo versionado). Os nomes das propriedades do lado do
-backend são do Dev; os valores apontam para cá:
+Exporte na shell, a partir da raiz do projeto (nunca em arquivo versionado). Os segredos
+são lidos dos arquivos de `deploy/local/secrets/` na hora; o valor não aparece aqui. A
+lista completa, com o que cada variável faz, está em `variaveis-backend.md`.
 
 ```
-export KEYCLOAK_REALM=crm
 export KEYCLOAK_BASE_URL=http://localhost:8180
+export KEYCLOAK_REALM=crm
 export KEYCLOAK_CLIENT_ID=crm-bff
 export KEYCLOAK_CLIENT_SECRET="$(cat deploy/local/secrets/crm_bff_client_secret)"
-# banco: jdbc:postgresql://localhost:5432/crm, usuário crm
-export CRM_DB_PASSWORD="$(cat deploy/local/secrets/crm_db_password)"
-# arquivos: endpoint http://localhost:3900, região garage, bucket crm-arquivos, path-style
+export CRM_PUBLIC_URL=http://localhost:5173/
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/crm
+export SPRING_DATASOURCE_USERNAME=crm
+export SPRING_DATASOURCE_PASSWORD="$(cat deploy/local/secrets/crm_db_password)"
+export CRM_STORAGE_ENDPOINT=http://localhost:3900
+export CRM_STORAGE_REGION=garage
+export CRM_STORAGE_BUCKET=crm-arquivos
+export CRM_STORAGE_PATH_STYLE=true
 export CRM_STORAGE_ACCESS_KEY="$(cat deploy/local/secrets/garage_s3_access_key_id)"
 export CRM_STORAGE_SECRET_KEY="$(cat deploy/local/secrets/garage_s3_secret_access_key)"
-# e-mail: SMTP localhost:1025, sem autenticação
 
 (cd backend && ./mvnw spring-boot:run)     # porta 8080
 (cd frontend && npm ci && npm run dev)     # porta 5173
 ```
+
+As seis `CRM_STORAGE_*` são obrigatórias desde a story 0-13: faltando qualquer uma, o
+api e o worker não sobem. O bucket é o `S3_BUCKET` do `.env` (`crm-arquivos`); se mudar
+lá, mude aqui. O e-mail não precisa de variável: fora do perfil `prod` o backend já usa
+o Mailpit (`localhost:1025`).
+
+### Como este roteiro foi provado
+
+Em 2026-11-25, na máquina `MacBook-Air-de-Maria.local`, com o compose de pé (cinco
+serviços `healthy`): clone do backend em `mktemp -d`, fixado em `5e501d7`
+(`git rev-parse HEAD` = `5e501d772ac2289a79996f539ca8760a0136d75f`). As linhas `export`
+deste bloco foram extraídas do próprio documento e carregadas na raiz; depois
+`./mvnw -B -q spring-boot:run` no clone.
+
+- ✅ execução: `Started CrmApplication in 3.944 seconds`; às 18:30:33Z,
+  `GET http://localhost:8080/actuator/health` → `200`,
+  `{"groups":["liveness","readiness"],"status":"UP"}`. O processo na porta 8080 tinha o
+  diretório de trabalho no clone temporário. Derrubado em seguida; a porta 8080 ficou livre.
+- ✅ execução, o gêmeo: o mesmo, sem `CRM_STORAGE_REGION` → saída `1`,
+  `APPLICATION FAILED TO START`, `Property: crm.storage.region`,
+  `Reason: não deve estar em branco`.
+- ⚠️ não medido: o health não toca o Garage; o `200` prova que a configuração liga, não
+  que as chaves abrem o bucket (isso os testes da 0-13 provam contra um Garage próprio).
 
 ### Mesma origem: `http://localhost:5173`
 
