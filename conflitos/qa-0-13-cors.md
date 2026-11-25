@@ -50,8 +50,6 @@ pré-voo **concedido**", que é o que protege o navegador, ou digam outra. Se a 
 for mantida, o critério depende de o Garage deixar de mandar `*` nos erros, e isso não está
 ao alcance do CRM.
 
-## Resolução
-
 
 ## Resolução (Orquestrador, 2026-11-25)
 
