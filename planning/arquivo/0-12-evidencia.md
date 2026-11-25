@@ -30,3 +30,24 @@ Achados: A1 (staleness "zero" falha a subida no Modulith 2.2 — no api as propr
 A2 (com `ImmediateStart` o repasse roda antes dos listeners e o evento some sem erro: usar `ContextReadyStart`);
 A3 (um `Task` avulso faz o Spring descartar a `List<Task<?>>`); A4 (dois testes de interpretação mantidos
 pelo Orquestrador: formato do `type` e entrega em até 5 s).
+
+## Dev, Revisor e Arquiteto (2026-11-25)
+
+- Dev `9126384`: verify 150/150. Revisor (`reviews/0-12.md`): critérios 1–6 passam; refez S01, S03, S05,
+  S06 (variante), S07, S09, S10 (3×), S12 contra o código real — todas vermelhas. B1: faltavam as regras do critério 7.
+- Remedição do Orquestrador sob carga ~9 (revisor rodando junto): 2 falhas de tempo; as duas passaram sozinhas
+  (~60 s cada). Remedição limpa depois das regras: **152/152, 5:29 min**.
+- Arquiteto `4e0d7bb` (backend) + `1a5c7bb` (ADR 0002): regras `only_platform_events_uses_the_application_event_publisher`
+  e `domain_event_consumers_are_application_module_listeners`. ✅ Sabotagens em clone:
+
+| # | Plantado | Resultado |
+|---|---|---|
+| (i) | `deals.SabPublisher` com `ApplicationEventPublisher.publishEvent` | exit 1, 3 violações |
+| (i) var. | `ApplicationContext.publishEvent` em `deals` | exit 1, 1 violação |
+| (i) gêmeo | mesma classe em `platform.events` | exit 0 |
+| (ii) | `@EventListener on(DomainEvent)` em `deals` | exit 1 |
+| (ii) var. | `@TransactionalEventListener` | exit 1 |
+| (ii) gêmeo | `@ApplicationModuleListener` | exit 0 |
+
+ADR 0002: N1 ordem `occurred_at, id` aceita; N2 a guarda do ContextReadyStart é probabilística (corrida na subida),
+com gatilho para trocar por uma guarda sem tempo.

@@ -187,7 +187,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 agente rodando.** Tudo commitado e publicado nos três repositórios (raiz, `backend/`, `frontend/`).
 O estado completo está no `ESTADO.md`; a evidência do dia, em `planning/arquivo/0-11-e-0-20-evidencia.md`.
 
-**Onda 0 (fundação):** 17/20 fechadas (a 0-11 fechou em 25/11 às 12h) — 0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-09, 0-10,
+**Onda 0 (fundação):** 18/20 fechadas (0-11 e 0-12 fecharam em 25/11) — 0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-09, 0-10,
 0-14, 0-15, 0-16, 0-17, 0-18, 0-19, 0-20. A **0-11** (e-mail) foi aprovada pelo Revisor (`reviews/0-11.md`,
 PASSA COM RESSALVAS); falta só ele conferir a regra de arquitetura `65c7928`, que entrou depois.
 Faltam **0-12** (eventos), **0-13** (arquivos), **0-04** (homologação local) e o **portão**.
@@ -226,7 +226,7 @@ e roda `sh deploy/local/verificar.sh` (exit 0) e o `comandos.pre_requisito`.
 | 4 | arquiteto | atualizar `SISTEMA.md` e `docs/arquitetura/modulos.md` (login, jobs, e-mail existem; `jobs`/`mail` não são "futuro"); criar `docs/arquitetura/atalhos.md` com os atalhos de `planning/arquivo/` e `reviews/` | só docs |
 | 5 | planejador | Registros de 0-10, 0-11, 0-20 (hoje vazios/velhos; evidência em `planning/arquivo/`); tirar da 0-04 e da `onda-0.md` o "remoto do raiz não existe" (existe desde 24/11); levar os achados da 0-11 (N1 teste de FAILED, N6 intermitência, N8 `@NamedInterface` de `platform.mail`, N9 STARTTLS na homologação) para as stories certas | só planning |
 | 6 | devops | 0-11 N3/N4: `MAIL_*` em `docs/operacao/variaveis-backend.md`; `MAIL_EHLO_NAME` obrigatório na VPS; o comando de verificação de e-mail e a porta da saúde | não bloqueia |
-| 7 | qa → dev → revisor | **0-12** eventos | QA `5dc05e9`, Dev `9126384`; Revisor: critérios 1–6 PASSAM, **B1 = faltam as 2 regras do Arquiteto (critério 7)**, em voo. Remedição do Orquestrador deu 2 falhas **por carga** (as duas passaram sozinhas, ~60 s cada) — testes sensíveis a tempo |
+| 7 ✅ | qa → dev → revisor | **0-12 fechada** | QA `5dc05e9`, Dev `9126384`, Arquiteto `4e0d7bb` (regras do critério 7, com sabotagem); remedido 152/152 (5:29 min); evidência em `planning/arquivo/0-12-evidencia.md` |
 | 8 | qa → dev → revisor | **0-13** arquivos | depois da 0-12; Arquiteto refaz a sabotagem com o `S3Client` real |
 | 9 | devops | **0-04** homologação local | por último |
 | 10 | orquestrador | `/portao 0`, depois `/colher` | reescrever o `ESTADO.md`; definir gatilho para os 5 atalhos sem gatilho em `docs/arquitetura/atalhos.md` ("ao menos uma vez", saúde de e-mail desligada, dois contadores de tentativa, sessão relida, tela em branco) |
