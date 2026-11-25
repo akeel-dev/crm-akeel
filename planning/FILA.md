@@ -35,7 +35,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-- passo 1 (QA 0-11 UUIDv7) — em voo. Feito também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). Em voo: passo 2 (Revisor, reconferência final da 0-11) e passo 7 (QA da 0-12). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
 
 ## 2026-11-24 (tarde) — substituída pela seção abaixo
 
@@ -179,7 +179,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 
 ### Em voo
 
-- passo 1 (QA 0-11 UUIDv7) — em voo. Feito também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). Em voo: passo 2 (Revisor, reconferência final da 0-11) e passo 7 (QA da 0-12). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
 
 ## 2026-11-25 (11:15) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -250,4 +250,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-- passo 1 (QA 0-11 UUIDv7) — em voo. Feito também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). Em voo: passo 2 (Revisor, reconferência final da 0-11) e passo 7 (QA da 0-12). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
