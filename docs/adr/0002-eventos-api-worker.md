@@ -1,6 +1,6 @@
 # ADR 0002 — O `api` grava o evento na `outbox_event`; só o `worker` o repassa ao Spring Modulith, que rastreia a entrega por consumidor
 
-Dono: Arquiteto. Data: 2026-11-24. Estado: aceito pelo humano em 2026-11-24 (planning/decisoes/2026-11-24.md §11)
+Dono: Arquiteto. Data: 2026-11-24. Estado: aceito pelo humano em 2026-11-24 (planning/decisoes/2026-11-24.md §11); emendado em 2026-11-25 (story 0-12)
 
 Responde a **Q-ARQ-1** da Onda 0 (trava a story 0-12).
 
@@ -53,7 +53,7 @@ Spring, ou ele conhece os listeners e os executa, ou não conhece e não grava n
    - outra tarefa recorrente do db-scheduler chama
      `FailedEventPublications.resubmit(ResubmissionOptions.defaults().withMinAge(…))`;
    - `spring.modulith.events.staleness.published`/`.processing`/`.resubmitted` > 0
-     **só no perfil `worker`** (no `api` ficam zero e o monitor não sobe), para que uma
+     **só no perfil `worker`** (no `api` ficam sem valor e o monitor não sobe; ver emenda de 2026-11-25, A1), para que uma
      publicação órfã de um `worker` que morreu vire `FAILED` e seja reentregue;
    - `republish-outstanding-events-on-restart` fica `false`;
    - sem `AbandonPolicy` por ora (padrão 2.2: nunca abandona).
@@ -102,3 +102,35 @@ de teste; consumidor com `@EventListener` simples).
   perfis `api` e `worker` diferem nas propriedades de *staleness*.
 - Tempo real (§4.4, RF-UI-05), quando vier: o consumidor no `worker` faz `NOTIFY`, e os
   `api` (que seguram as conexões SSE) fazem `LISTEN`. Não muda esta decisão.
+
+## Emenda de 2026-11-25 (story 0-12)
+
+Achados A1 e A2 da evidência do QA da 0-12 (`planning/arquivo/0-12-evidencia.md`), mais
+uma regra sobre ordem que o UUIDv7 da 0-11 tornou tentadora.
+
+1. **A1: staleness no `api` fica sem valor, não zero.** No Spring Modulith 2.2.0, o
+   construtor de `StalenessProperties` passa cada valor configurado por
+   `requirePositive`, que lança `IllegalArgumentException` ("Staleness property '%s' must
+   be greater than zero but was %s!") se a duração for zero ou negativa; só o valor
+   ausente (`null`) vira `UNCONFIGURED_DURATION`, e `monitorStaleness()` só liga o
+   monitor quando algum valor difere dele. Zero, portanto, derruba a subida do `api`. A
+   decisão 4 passa a dizer: no `api`, `spring.modulith.events.staleness.*` **fica sem
+   valor**. Evidência: ✅ leitura do bytecode de
+   `org/springframework/modulith/events/config/StalenessProperties.class` em
+   `~/.m2/repository/org/springframework/modulith/spring-modulith-events-core/2.2.0/spring-modulith-events-core-2.2.0.jar`
+   (`javap -c -p`, 2026-11-25). Guardado por: sabotagens S07 (staleness no `api`) e S08
+   (`worker` sem staleness) do `DomainEventOutboxTest`.
+2. **A2: o `worker` inicia o db-scheduler só com o contexto pronto
+   (`ContextReadyStart`).** Com `ImmediateStart`, o repasse pode rodar durante o refresh,
+   antes de o Spring registrar os `@ApplicationModuleListener`: o `publishEvent` não
+   encontra consumidor, o registro não grava publicação, `relayed_at` é marcado e o
+   evento se perde sem erro. Regra: o db-scheduler do `worker` usa `ContextReadyStart`.
+   Guardado por: `DomainEventOutboxTest.eventsStoredWhileTheWorkerIsDownAreRelayedAndDeliveredOnceWhenItStarts`
+   (sabotagem S10, `ImmediateStart`: 1 falha, evento perdido), via `comandos.suite`.
+3. **Ordem entre processos não vem do id.** O UUIDv7 é monotônico **por processo**; `api`
+   e `worker` (e mais de uma instância de cada) geram ids com relógios e contadores
+   próprios. O `ORDER BY id` do repasse (decisão 2) é só uma ordem de varredura estável,
+   não uma ordem global de eventos. Nenhum consumidor nem regra de negócio deve deduzir
+   ordem global entre eventos pelo `id`; a decisão 6 (sem ordem garantida) continua
+   valendo. Quem precisar de ordem usa um dado de domínio (versão da entidade, por
+   exemplo), decidido em ADR próprio quando aparecer.
