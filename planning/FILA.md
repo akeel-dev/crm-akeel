@@ -256,4 +256,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-- QA da 0-13 (arquivos) em voo, despachado em 25/11 ~14h20.
+- Dev das correções N1/N3 da 0-13 (backend) em voo. Feitos: N2 docs (`061284b`), QA N1/N3 (`c799de5`).

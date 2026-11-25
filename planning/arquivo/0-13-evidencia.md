@@ -38,3 +38,23 @@ resolvido pelo Orquestrador (o critério confere o pré-voo, como o navegador).
 | `deals.SabPresigner` com `S3Presigner` | exit 1, mesma regra |
 | tipo público de `platform.openapi` usado por `deals` | exit 1, ModularityTest (não exposto) |
 | `deals` usando `ObjectStorage` (controle) | exit 0 (`@NamedInterface("storage")`) |
+
+## Correções depois da revisão (2026-11-25)
+
+- N2 (DevOps `061284b`): `docs/operacao/variaveis-backend.md` e `ambiente-local.md` com as seis `CRM_STORAGE_*`;
+  ✅ api subiu localmente com o roteiro do doc (`/actuator/health` 200); gêmeo sem `CRM_STORAGE_REGION` → exit 1.
+- N1/N3 (QA `c799de5`): `StorageCorsCommandTest` (comando `--crm.storage.apply-cors`) e `StoragePartSizeTest`
+  (mínimo de 5 MiB). ✅ Vermelho contra `5e501d7`: 9 testes, 6 falhas por asserção. Sabotagens em clone:
+
+| # | Sabotagem | Resultado |
+|---|---|---|
+| S1 | comando sai 0 sem aplicar | vermelho (pré-voo 403) |
+| S2 | falha do S3 engolida | vermelho (exit 0) |
+| S3 | mensagem sem endpoint/bucket | vermelho |
+| S4 | CORS aplicado em toda subida | vermelho (api e worker) |
+| S5 | aceita 5242879 | vermelho |
+| S6 | recusa exatamente 5 MiB | vermelho |
+| S7 | origem intrusa na regra | vermelho |
+| S8 | mensagem sem o nome da propriedade | vermelho |
+
+Pendente para a 0-04 (DevOps): rodar `--crm.storage.apply-cors` no deploy, como passo único (igual ao `migrate`).
