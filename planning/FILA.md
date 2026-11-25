@@ -138,7 +138,7 @@ sumiu (desfeito, sem perda): sabotagem só em clone, e conferir o `cd` antes. (2
 rodando `npm ci` no mesmo `frontend/node_modules` se atropelam: não paralelizar a suíte do
 frontend. (3) clones no scratchpad compartilhado somem entre agentes, e um `cd` que falha roda o comando no lugar errado (dois Revisores hoje): cada agente usa um diretório único e aborta se o `cd` falhar. (4) não apagar arquivos do scratchpad por curinga (`rm *.log`): é compartilhado entre agentes. (5) `rclone --checksum` sobre remote `crypt` compara só o tamanho (0-03).
 
-## 2026-11-24 (noite, 19:00) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
+## 2026-11-24 (noite, 19:00) — substituída pela seção abaixo
 
 **Onde paramos:** o Pedro pediu para parar os agentes depois das tarefas em voo. Nenhum
 agente rodando. Onda 0 com **13/20 fechadas** (0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-14,
@@ -176,6 +176,67 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 5. `rclone --checksum` sobre remote `crypt` compara só o tamanho.
 6. No Spring Boot 4.2, `server.request.header.forwarded.strategy=native` não existe (é `web-server`).
 7. Parâmetro de cookie `required: true` no OpenAPI vira parâmetro obrigatório no cliente gerado; cookie que o navegador envia é `required: false`.
+
+### Em voo
+
+Nada.
+
+## 2026-11-25 (11:15) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
+
+**Onde paramos:** o Pedro pediu para pausar os agentes para reiniciar o computador. **Nenhum
+agente rodando.** Tudo commitado e publicado nos três repositórios (raiz, `backend/`, `frontend/`).
+O estado completo está no `ESTADO.md`; a evidência do dia, em `planning/arquivo/0-11-e-0-20-evidencia.md`.
+
+**Onda 0 (fundação):** 16/20 fechadas — 0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-09, 0-10,
+0-14, 0-15, 0-16, 0-17, 0-18, 0-19, 0-20. A **0-11** (e-mail) foi aprovada pelo Revisor (`reviews/0-11.md`,
+PASSA COM RESSALVAS); falta só ele conferir a regra de arquitetura `65c7928`, que entrou depois.
+Faltam **0-12** (eventos), **0-13** (arquivos), **0-04** (homologação local) e o **portão**.
+
+**Última medição (Orquestrador, 2026-11-25 11:12):** `comandos.suite` → **exit 0** (backend 132/132 em
+3:31 min, frontend 239/239, `cmp` do contrato 0, portabilidade ok). HEADs: backend `c07d095`, frontend `63752e9`.
+O compose crm-akeel (`docker compose up -d --wait` no raiz) precisa estar de pé para o e2e e a 0-04;
+depois de reiniciar o computador, subir o Docker Desktop e o compose de novo.
+
+### Para mostrar ao humano
+
+**Nada pendente com o Pedro.** Decisões em `planning/decisoes/2026-11-24.md` §1–§26 (a §25 foi
+descartada). Regras em todo despacho: **código sem comentários** (§17/§18, no `CLAUDE.md`); o deploy
+real espera o Pedro e não bloqueia nada (§24).
+
+### Próxima ação, em ordem
+
+| # | Papel | Ação | Detalhe |
+|---|---|---|---|
+| 1 | orquestrador | decidir UUIDv7 × v4 **antes da 0-12** | `reviews/0-11.md` N2: a 0-11 gerou UUID v4 (o JDK 25 não gera v7); a §6.1 da spec e o ADR 0002 pedem v7. Opções: gerador v7 pequeno em `platform` (com teste) ou biblioteca. Recomendação: gerador próprio de 20 linhas com teste de ordenação; aplicar também ao `mail_delivery` |
+| 2 | revisor | conferir a regra `65c7928` da 0-11 (num clone) | depois disso, a 0-11 fecha |
+| 3 | devops | 0-11 N3/N4: documentar `MAIL_*` em `docs/operacao/variaveis-backend.md`; `MAIL_EHLO_NAME` obrigatório na VPS; o comando de verificação de e-mail ocupa a porta da saúde e leva ~25 min para falhar | não bloqueia |
+| 4 | qa → dev → revisor | **0-12** eventos (backend) | ADR 0002 (`outbox_event` no api, repasse pelo worker). Usar o UUID decidido no passo 1 |
+| 5 | qa → dev → revisor | **0-13** arquivos (backend, depois da 0-12) | critério de resabotagem com o `S3Client` real (Arquiteto) |
+| 6 | devops | **0-04** homologação local | por último; usa o e2e (`npm run e2e` com `E2E_BASE_URL`) e `docs/operacao/variaveis-backend.md` |
+| 7 | orquestrador | `/portao 0`, depois `/colher` | reescrever o `ESTADO.md`; levar as lições abaixo para a `COLHEITA.md` |
+
+### Como despachar (o que aprendemos)
+
+- Backend e frontend são repositórios git separados: **um escritor por repositório por vez**.
+  QA, Dev e Arquiteto escrevem no repositório real; Revisor e sabotagens rodam sempre num **clone de
+  diretório único fixado no commit** da story (`cd ... || exit`).
+- Rigor completo (IAM, USR, TRS, MIG, API, WPP, BIL, LGPD): sabotagens refeitas contra o código real,
+  procedência ✅/⚠️, gêmeo por presença; a evidência vai para `planning/arquivo/`, nunca para comentário.
+- O Orquestrador remede a suíte depois de cada Dev e faz o push depois de cada story fechada
+  (token do GitHub com escopo `repo` + `workflow`, nunca gravado em arquivo).
+
+### Para a COLHEITA (lições acumuladas)
+
+1. Sabotagem só em clone de diretório único; abortar se o `cd` falhar.
+2. Não apagar arquivos do scratchpad por curinga: é compartilhado entre agentes.
+3. Dois agentes com `npm ci` no mesmo `frontend/` se atropelam.
+4. Commit de testes vermelhos quebra a compilação do `main` do backend: medir a story anterior num clone fixado.
+5. `rclone --checksum` sobre remote `crypt` compara só o tamanho.
+6. Spring Boot 4.2: `server.request.header.forwarded.strategy=native` não existe (é `web-server`).
+7. Cookie enviado pelo navegador é `required: false` no OpenAPI; senão o cliente gerado o exige.
+8. Keycloak 26 recusa parênteses em nome/sobrenome (validador do perfil): o login trava em VERIFY_PROFILE.
+9. db-scheduler sem `scheduler-name` faz lookup de hostname (5 s por contexto no macOS): a suíte ia de 19 para 6 min.
+10. O Orquestrador classificou como "redirecionamento aberto" um achado sem medir (o Revisor mediu e era robustez); medir antes de classificar a gravidade.
 
 ### Em voo
 
