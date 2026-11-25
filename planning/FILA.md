@@ -35,7 +35,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-Nada.
+- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 4 (Arquiteto docs), 5 (Planejador), 6 (DevOps docs) — despachados em 25/11 11:30.
 
 ## 2026-11-24 (tarde) — substituída pela seção abaixo
 
@@ -179,7 +179,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 
 ### Em voo
 
-Nada.
+- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 4 (Arquiteto docs), 5 (Planejador), 6 (DevOps docs) — despachados em 25/11 11:30.
 
 ## 2026-11-25 (11:15) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -250,4 +250,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-Nada.
+- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 4 (Arquiteto docs), 5 (Planejador), 6 (DevOps docs) — despachados em 25/11 11:30.
