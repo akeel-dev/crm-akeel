@@ -226,7 +226,7 @@ e roda `sh deploy/local/verificar.sh` (exit 0) e o `comandos.pre_requisito`.
 | 4 | arquiteto | atualizar `SISTEMA.md` e `docs/arquitetura/modulos.md` (login, jobs, e-mail existem; `jobs`/`mail` não são "futuro"); criar `docs/arquitetura/atalhos.md` com os atalhos de `planning/arquivo/` e `reviews/` | só docs |
 | 5 | planejador | Registros de 0-10, 0-11, 0-20 (hoje vazios/velhos; evidência em `planning/arquivo/`); tirar da 0-04 e da `onda-0.md` o "remoto do raiz não existe" (existe desde 24/11); levar os achados da 0-11 (N1 teste de FAILED, N6 intermitência, N8 `@NamedInterface` de `platform.mail`, N9 STARTTLS na homologação) para as stories certas | só planning |
 | 6 | devops | 0-11 N3/N4: `MAIL_*` em `docs/operacao/variaveis-backend.md`; `MAIL_EHLO_NAME` obrigatório na VPS; o comando de verificação de e-mail e a porta da saúde | não bloqueia |
-| 7 | qa → dev → revisor | **0-12** eventos (ADR 0002) | depois do passo 1 |
+| 7 | qa → dev → revisor | **0-12** eventos | QA `5dc05e9`, Dev `9126384`; Revisor: critérios 1–6 PASSAM, **B1 = faltam as 2 regras do Arquiteto (critério 7)**, em voo. Remedição do Orquestrador deu 2 falhas **por carga** (as duas passaram sozinhas, ~60 s cada) — testes sensíveis a tempo |
 | 8 | qa → dev → revisor | **0-13** arquivos | depois da 0-12; Arquiteto refaz a sabotagem com o `S3Client` real |
 | 9 | devops | **0-04** homologação local | por último |
 | 10 | orquestrador | `/portao 0`, depois `/colher` | reescrever o `ESTADO.md`; definir gatilho para os 5 atalhos sem gatilho em `docs/arquitetura/atalhos.md` ("ao menos uma vez", saúde de e-mail desligada, dois contadores de tentativa, sessão relida, tela em branco) |
@@ -243,6 +243,12 @@ Os passos 1–6 podem rodar em paralelo, respeitando um escritor por repositóri
   procedência ✅/⚠️, gêmeo por presença; a evidência vai para `planning/arquivo/`, nunca para comentário.
 - O Orquestrador remede a suíte depois de cada Dev e faz o push depois de cada story fechada
   (token do GitHub com escopo `repo` + `workflow`, nunca gravado em arquivo).
+
+### Notas para stories futuras (achados da 0-12)
+
+- **N8, dinheiro no payload de evento:** o `payload` volta do banco como `Map<String,Object>` e, numa sonda com Jackson 3 fora do Spring, `BigDecimal("1234.50")` voltou como `Double`. A §6.1 proíbe `double` em dinheiro. A primeira story que publicar valor monetário em evento (DEA) precisa de um teste disso.
+- **N5/N6 (baixos):** `correlationId` gerado com `UUID.randomUUID()` em vez do `IdGenerator`; `WorkerEventStaleness` relê o modo em vez de usar `RunModes.mode`. Corrigir na primeira story que tocar `platform.events`.
+- **Testes sensíveis a tempo sob carga:** `SystemMailTest#withTheSmtpDown…` e `DomainEventOutboxTest#aFailedConsumerIsNotRetriedBeforeTheMinimumAge…` falharam com carga ~9 e passaram sozinhos. Não rodar duas suítes do backend ao mesmo tempo; observar no CI.
 
 ### Lições
 
