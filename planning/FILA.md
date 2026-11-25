@@ -179,7 +179,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 
 ### Em voo
 
-- QA da 0-13 (arquivos) em voo, despachado em 25/11 ~14h20.
+Nada.
 
 ## 2026-11-25 (11:15) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
