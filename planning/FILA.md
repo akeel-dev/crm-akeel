@@ -35,7 +35,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-- QA da 0-13 (arquivos) em voo, despachado em 25/11 ~14h20.
+Nada.
 
 ## 2026-11-24 (tarde) — substituída pela seção abaixo
 
