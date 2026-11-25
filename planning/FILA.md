@@ -256,4 +256,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-- Correções da 0-13 feitas: N2 docs (`061284b`), QA N1/N3 (`c799de5`), Dev (`46e767a`). Suíte do raiz exit 0 (backend 177/177, frontend 239/239). Próximo: 0-04.
+- Correções da 0-13 feitas: N2 docs (`061284b`), QA N1/N3 (`c799de5`), Dev (`46e767a`). Suíte do raiz exit 0 (backend 177/177, frontend 239/239). 0-04 (DevOps) em voo, despachada em 25/11.
