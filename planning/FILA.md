@@ -161,9 +161,9 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 | 1 ✅ | dev (frontend) | feito: `299c66a`, `cmp` 0, 239/239; **0-09 fechada** | o cookie `XSRF-TOKEN` agora é `required: false` (`conflitos/dev-logout-cookie-obrigatorio.md`); o `cmp` volta a 0. Isso fecha a **0-09** |
 | 2 ✅ | revisor | **0-10 fechada**: reconferência PASSA (`reviews/0-10.md`); N4 (`crm.mode=migrate` só em yml sobe api) e N10 ficam na fila | B1 (modo inválido falha) e N1 (saúde do worker). Ponto do Dev: a validação no contexto mora no bean do scheduler (`db-scheduler.enabled=false` a pularia) |
 | 3 | planejador | Registros finais de 0-09 e 0-10 | evidência em `planning/arquivo/0-09-sabotagens.md` e `0-10-arquiteto.md`; QA `66218ed`/`ea8ebbf`, Dev `59c1156`/`4c95c03`/`872f94f` |
-| 4 | qa → dev → revisor | **0-11** e-mail (backend) | já inclui a named interface de `platform.jobs` (critério 9) |
+| 4 | qa → dev → revisor | **0-11** e-mail: QA `9e4aa2f`, Dev `5c8d747`, 131/131; regra do Arquiteto e Revisor em voo | já inclui a named interface de `platform.jobs` (critério 9) |
 | 5 | qa → dev → revisor | 0-12 eventos, 0-13 arquivos (backend, em série) | |
-| 6 | qa → dev → revisor | 0-20 e2e do login (frontend) | depende de 0-09 fechada e do compose |
+| 6 ✅ | qa → dev → revisor | **0-20 fechada** (QA `2a296c7`+`4999d2d`, Dev `43ce802`, `reviews/0-20.md` sem bloqueantes, 120/120). N1 intermitência e N3 `id_token_hint` em correção pelo QA | depende de 0-09 fechada e do compose |
 | 7 | devops | 0-04 homologação local | último; ver a nota de variáveis em `docs/operacao/variaveis-backend.md` |
 | 8 | orquestrador | `/portao 0` | reescrever o `ESTADO.md`; levar as lições abaixo para a `COLHEITA.md` (`/colher`) |
 
