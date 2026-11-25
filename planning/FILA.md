@@ -35,7 +35,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7) e 3 (Revisor 0-20) — em voo. Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 (QA 0-11 UUIDv7) — em voo. Feito também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
 
 ## 2026-11-24 (tarde) — substituída pela seção abaixo
 
@@ -179,7 +179,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7) e 3 (Revisor 0-20) — em voo. Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 (QA 0-11 UUIDv7) — em voo. Feito também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
 
 ## 2026-11-25 (11:15) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -222,7 +222,7 @@ e roda `sh deploy/local/verificar.sh` (exit 0) e o `comandos.pre_requisito`.
 |---|---|---|---|
 | 1 | qa → dev | **0-11 N2: UUIDv7** | a spec §6.1 e a 0-12 pedem v7 (`decisoes §27`); a 0-11 gerou v4. Gerador v7 em `platform` com teste de ordenação; aplicar ao `mail_delivery`. Corrige a 0-11 antes da 0-12 |
 | 2 | revisor | reconferir a **0-11** (num clone): a regra `65c7928` e a correção do UUID | depois disso a 0-11 fecha |
-| 3 | revisor | reconferir as correções da **0-20** (`63752e9`, N1/N3), que entraram depois do fechamento | num clone; o e2e precisa do compose |
+| 3 ✅ | revisor | reconferência da **0-20** PASSA (80/80, sabotagem por asserção) — | reconferir as correções da **0-20** (`63752e9`, N1/N3), que entraram depois do fechamento | num clone; o e2e precisa do compose |
 | 4 | arquiteto | atualizar `SISTEMA.md` e `docs/arquitetura/modulos.md` (login, jobs, e-mail existem; `jobs`/`mail` não são "futuro"); criar `docs/arquitetura/atalhos.md` com os atalhos de `planning/arquivo/` e `reviews/` | só docs |
 | 5 | planejador | Registros de 0-10, 0-11, 0-20 (hoje vazios/velhos; evidência em `planning/arquivo/`); tirar da 0-04 e da `onda-0.md` o "remoto do raiz não existe" (existe desde 24/11); levar os achados da 0-11 (N1 teste de FAILED, N6 intermitência, N8 `@NamedInterface` de `platform.mail`, N9 STARTTLS na homologação) para as stories certas | só planning |
 | 6 | devops | 0-11 N3/N4: `MAIL_*` em `docs/operacao/variaveis-backend.md`; `MAIL_EHLO_NAME` obrigatório na VPS; o comando de verificação de e-mail e a porta da saúde | não bloqueia |
@@ -250,4 +250,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7) e 3 (Revisor 0-20) — em voo. Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 (QA 0-11 UUIDv7) — em voo. Feito também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
