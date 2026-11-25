@@ -150,13 +150,18 @@ mudam: em produção, o STARTTLS continua obrigatório.
    `git -C backend rev-parse HEAD`, `git -C frontend rev-parse HEAD`.
 3. Localmente: `sh deploy/imagens.sh`, `sh deploy/deploy.sh homologacao-local`, ponha
    `frontend/` no commit novo e rode `sh deploy/homologacao/e2e.sh`.
-4. Commit no raiz só com o manifesto. O push para `main` dispara o workflow.
+4. Commit no raiz só com o manifesto. Hoje o workflow roda à mão (Actions → deploy → Run
+   workflow); depois da liberação, o push para `main` o dispara.
 
 Para provar outro par sem mexer no manifesto: `CRM_MANIFESTO=<outro arquivo> sh deploy/deploy.sh homologacao-local`.
 
 ## O workflow do raiz (`.github/workflows/deploy.yml`)
 
-Dispara em push para `main` e à mão (`workflow_dispatch`). Um deploy por vez
+Dispara **só à mão** (`workflow_dispatch`, decisão do Orquestrador em 2026-11-25 sobre
+`decisoes/2026-11-24.md §24`): o raiz recebe push a todo momento (docs, fila), e sem o
+segredo `CRM_PRODUTOS_LEITURA` e o runner da VPS cada push falharia na homologação e deixaria
+a produção esperando um runner que não existe. Religar o `push: branches: [main]` é um passo
+da liberação do deploy (pendências abaixo). Um deploy por vez
 (`concurrency: deploy`, sem cancelar o que está rodando).
 
 | Job | Onde | O que faz |
@@ -181,6 +186,8 @@ docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest
 Nada disto é do DevOps sozinho: tudo espera a liberação do Pedro (`decisoes §24`).
 
 - [ ] **Liberação do Pedro** para começar o deploy real.
+- [ ] **Religar o gatilho `push`** em `.github/workflows/deploy.yml` (`on: push: branches: [main]`
+      ao lado do `workflow_dispatch`), só depois do runner, do ambiente e do segredo abaixo.
 - [ ] **VPS** de produção (e, se houver, a de homologação) com Docker e o compose v2.
 - [ ] **Runner self-hosted** do GitHub na VPS, com o rótulo `crm-producao`, registrado no
       repositório `akeel-dev/crm-akeel`.
