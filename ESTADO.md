@@ -33,7 +33,7 @@ O que funciona hoje (medido):
 | `comandos.suite` | **exit 0** — backend 132/132 (3:31 min), frontend 239/239, `cmp` do contrato 0, portabilidade do backup ok | 2026-11-25 11:12 | macOS |
 | e2e (`cd frontend && npm run e2e`, fora da suite) | 160/160 em `--repeat-each=20` (QA) | 2026-11-25 | macOS |
 
-HEADs: raiz ver `git log`; backend `5e501d7` (168/168); frontend `63752e9`.
+HEADs: raiz ver `git log`; backend `46e767a` (177/177); frontend `63752e9`.
 
 ## O que não existe ainda
 
