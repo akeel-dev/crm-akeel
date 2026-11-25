@@ -1,6 +1,6 @@
 # Conflito — devops: a imagem do backend não tem verificação de saúde para responder
 
-Aberto por: devops. Data: 2026-11-24. Story: 0-07. Estado: aberto
+Aberto por: devops. Data: 2026-11-24. Story: 0-07. Estado: resolvido (ver Resolução)
 
 ## O que está em conflito
 

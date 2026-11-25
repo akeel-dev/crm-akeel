@@ -43,7 +43,7 @@ HEADs: raiz ver `git log`; backend `c07d095`; frontend `63752e9`.
 
 | Identificador | O que bloqueia | Quem decide |
 |---|---|---|
-| UUIDv7 × v4 (`reviews/0-11.md` N2) | a 0-12 (ADR 0002 pede v7) | Orquestrador/Arquiteto, antes da 0-12 |
+| UUID v4 na 0-11 (`reviews/0-11.md` N2) | a 0-12 (a spec §6.1 pede v7) | nada a decidir: corrigir para v7 na 0-11 (`decisoes §27`) |
 | P-07 (spec) | o prazo do projeto | Akeel |
 | P-01 a P-06 (spec) | AUT, WPP, PRP, RPT, PRJ, MIG | Akeel |
 | Sessões de estudo do Pipedrive | módulos 🟡 | Pedro |

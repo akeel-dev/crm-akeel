@@ -1,6 +1,6 @@
 # Conflito — qa: `server.request.header.forwarded.strategy=native` não existe no Boot 4.2.0
 
-Aberto por: qa. Data: 2026-11-24. Story: 0-09. Estado: aberto
+Aberto por: qa. Data: 2026-11-24. Story: 0-09. Estado: resolvido (ver Resolução)
 
 ## O que está em conflito
 

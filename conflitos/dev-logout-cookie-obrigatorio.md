@@ -1,6 +1,6 @@
 # Conflito — dev: o contrato marca o cookie XSRF-TOKEN do POST /logout como obrigatório
 
-Aberto por: dev. Data: 2026-11-24. Despacho: sincronizar o contrato do frontend com o commit 59c1156 do backend. Estado: aberto
+Aberto por: dev. Data: 2026-11-24. Despacho: sincronizar o contrato do frontend com o commit 59c1156 do backend. Estado: resolvido (ver Resolução)
 
 ## O que está em conflito
 

@@ -199,21 +199,40 @@ depois de reiniciar o computador, subir o Docker Desktop e o compose de novo.
 
 ### Para mostrar ao humano
 
-**Nada pendente com o Pedro.** Decisões em `planning/decisoes/2026-11-24.md` §1–§26 (a §25 foi
-descartada). Regras em todo despacho: **código sem comentários** (§17/§18, no `CLAUDE.md`); o deploy
-real espera o Pedro e não bloqueia nada (§24).
+**Nenhuma decisão do Pedro bloqueia a próxima ação.** Pendências dele que **não bloqueiam** a Onda 0
+(listadas para não se perderem; vinham do ⛳ de 24/11):
+- sessões de estudo do Pipedrive para os módulos 🟡 (spec §14.2);
+- com a Akeel: P-07 (prazo), P-01–P-06 (AUT, WPP, PRP, RPT, PRJ, MIG), provedor do backup no Brasil (P-17);
+- P-19: mapear os conjuntos de permissões nos 4 perfis do Keycloak (necessário na Onda 1, USR);
+- com a TI: confirmar *Valid post logout redirect URIs* do `crm-bff` real (spec P-18);
+- antes da produção: trocar os secrets do Keycloak e revogar o token antigo do GitHub (§15, §20);
+- liberar o deploy real quando quiser (§24).
+
+Decisões em `planning/decisoes/2026-11-24.md` §1–§27 (a §25 foi descartada; a §12 foi corrigida pela §13).
+Regras em todo despacho: **código sem comentários** (§17/§18, no `CLAUDE.md`).
+
+### Antes de despachar (depois de reiniciar o computador)
+
+O Pedro abre o Docker Desktop; o Orquestrador sobe o compose (`docker compose up -d --wait` no raiz)
+e roda `sh deploy/local/verificar.sh` (exit 0) e o `comandos.pre_requisito`.
 
 ### Próxima ação, em ordem
 
 | # | Papel | Ação | Detalhe |
 |---|---|---|---|
-| 1 | orquestrador | decidir UUIDv7 × v4 **antes da 0-12** | `reviews/0-11.md` N2: a 0-11 gerou UUID v4 (o JDK 25 não gera v7); a §6.1 da spec e o ADR 0002 pedem v7. Opções: gerador v7 pequeno em `platform` (com teste) ou biblioteca. Recomendação: gerador próprio de 20 linhas com teste de ordenação; aplicar também ao `mail_delivery` |
-| 2 | revisor | conferir a regra `65c7928` da 0-11 (num clone) | depois disso, a 0-11 fecha |
-| 3 | devops | 0-11 N3/N4: documentar `MAIL_*` em `docs/operacao/variaveis-backend.md`; `MAIL_EHLO_NAME` obrigatório na VPS; o comando de verificação de e-mail ocupa a porta da saúde e leva ~25 min para falhar | não bloqueia |
-| 4 | qa → dev → revisor | **0-12** eventos (backend) | ADR 0002 (`outbox_event` no api, repasse pelo worker). Usar o UUID decidido no passo 1 |
-| 5 | qa → dev → revisor | **0-13** arquivos (backend, depois da 0-12) | critério de resabotagem com o `S3Client` real (Arquiteto) |
-| 6 | devops | **0-04** homologação local | por último; usa o e2e (`npm run e2e` com `E2E_BASE_URL`) e `docs/operacao/variaveis-backend.md` |
-| 7 | orquestrador | `/portao 0`, depois `/colher` | reescrever o `ESTADO.md`; levar as lições abaixo para a `COLHEITA.md` |
+| 1 | qa → dev | **0-11 N2: UUIDv7** | a spec §6.1 e a 0-12 pedem v7 (`decisoes §27`); a 0-11 gerou v4. Gerador v7 em `platform` com teste de ordenação; aplicar ao `mail_delivery`. Corrige a 0-11 antes da 0-12 |
+| 2 | revisor | reconferir a **0-11** (num clone): a regra `65c7928` e a correção do UUID | depois disso a 0-11 fecha |
+| 3 | revisor | reconferir as correções da **0-20** (`63752e9`, N1/N3), que entraram depois do fechamento | num clone; o e2e precisa do compose |
+| 4 | arquiteto | atualizar `SISTEMA.md` e `docs/arquitetura/modulos.md` (login, jobs, e-mail existem; `jobs`/`mail` não são "futuro"); criar `docs/arquitetura/atalhos.md` com os atalhos de `planning/arquivo/` e `reviews/` | só docs |
+| 5 | planejador | Registros de 0-10, 0-11, 0-20 (hoje vazios/velhos; evidência em `planning/arquivo/`); tirar da 0-04 e da `onda-0.md` o "remoto do raiz não existe" (existe desde 24/11); levar os achados da 0-11 (N1 teste de FAILED, N6 intermitência, N8 `@NamedInterface` de `platform.mail`, N9 STARTTLS na homologação) para as stories certas | só planning |
+| 6 | devops | 0-11 N3/N4: `MAIL_*` em `docs/operacao/variaveis-backend.md`; `MAIL_EHLO_NAME` obrigatório na VPS; o comando de verificação de e-mail e a porta da saúde | não bloqueia |
+| 7 | qa → dev → revisor | **0-12** eventos (ADR 0002) | depois do passo 1 |
+| 8 | qa → dev → revisor | **0-13** arquivos | depois da 0-12; Arquiteto refaz a sabotagem com o `S3Client` real |
+| 9 | devops | **0-04** homologação local | por último |
+| 10 | orquestrador | `/portao 0`, depois `/colher` | reescrever o `ESTADO.md` |
+
+Os passos 1–6 podem rodar em paralelo, respeitando um escritor por repositório (1 no backend; 3 só lê;
+4 e 5 e 6 no raiz em arquivos diferentes — commits em sequência).
 
 ### Como despachar (o que aprendemos)
 
@@ -225,18 +244,9 @@ real espera o Pedro e não bloqueia nada (§24).
 - O Orquestrador remede a suíte depois de cada Dev e faz o push depois de cada story fechada
   (token do GitHub com escopo `repo` + `workflow`, nunca gravado em arquivo).
 
-### Para a COLHEITA (lições acumuladas)
+### Lições
 
-1. Sabotagem só em clone de diretório único; abortar se o `cd` falhar.
-2. Não apagar arquivos do scratchpad por curinga: é compartilhado entre agentes.
-3. Dois agentes com `npm ci` no mesmo `frontend/` se atropelam.
-4. Commit de testes vermelhos quebra a compilação do `main` do backend: medir a story anterior num clone fixado.
-5. `rclone --checksum` sobre remote `crypt` compara só o tamanho.
-6. Spring Boot 4.2: `server.request.header.forwarded.strategy=native` não existe (é `web-server`).
-7. Cookie enviado pelo navegador é `required: false` no OpenAPI; senão o cliente gerado o exige.
-8. Keycloak 26 recusa parênteses em nome/sobrenome (validador do perfil): o login trava em VERIFY_PROFILE.
-9. db-scheduler sem `scheduler-name` faz lookup de hostname (5 s por contexto no macOS): a suíte ia de 19 para 6 min.
-10. O Orquestrador classificou como "redirecionamento aberto" um achado sem medir (o Revisor mediu e era robustez); medir antes de classificar a gravidade.
+Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 

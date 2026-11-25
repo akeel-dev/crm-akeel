@@ -10,3 +10,5 @@ dependências em escopo test.
 
 **Para o Revisor:** não é excesso de escopo; foi despacho do Orquestrador.
 **Para o Planejador:** acrescentar a linha do Dev na tabela de papéis da 0-06.
+
+**Estado: resolvido** — o Planejador acrescentou a linha do Dev à 0-06; revisão da 0-06 fechada.
