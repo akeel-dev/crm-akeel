@@ -25,3 +25,16 @@ No HEAD real o test-compile quebra até o Dev. ✅ Vermelho por asserção com s
 
 Conflito `conflitos/qa-0-13-cors.md`: o Garage põe `Access-Control-Allow-Origin: *` em respostas de erro;
 resolvido pelo Orquestrador (o critério confere o pré-voo, como o navegador).
+
+## Dev e Arquiteto (2026-11-25)
+
+- Dev `5e501d7`: 16/16 nas três classes; verify 168/168 (remedido pelo Orquestrador: 168/168, 8:19 min).
+- Arquiteto, critério 8, classes reais do AWS SDK 2.59.9, clone em `5e501d7` (✅ execução):
+
+| Plantado | Resultado |
+|---|---|
+| `deals.SabS3` com `S3Client` | exit 1, `aws_sdk_only_in_platform_storage` |
+| gêmeo em `platform.storage` | exit 0 |
+| `deals.SabPresigner` com `S3Presigner` | exit 1, mesma regra |
+| tipo público de `platform.openapi` usado por `deals` | exit 1, ModularityTest (não exposto) |
+| `deals` usando `ObjectStorage` (controle) | exit 0 (`@NamedInterface("storage")`) |
