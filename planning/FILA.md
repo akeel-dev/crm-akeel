@@ -35,7 +35,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). Em voo: passo 2 (Revisor, reconferência final da 0-11) e passo 7 (QA da 0-12). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). **0-11 fechada** (reconferência final PASSA, `reviews/0-11.md`). Em voo: passo 7 (QA da 0-12). Para a 0-12: a monotonia do UUIDv7 vale por processo; entre api e worker a ordem é só por milissegundo (ver o envelope do evento). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
 
 ## 2026-11-24 (tarde) — substituída pela seção abaixo
 
@@ -179,7 +179,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 
 ### Em voo
 
-- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). Em voo: passo 2 (Revisor, reconferência final da 0-11) e passo 7 (QA da 0-12). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). **0-11 fechada** (reconferência final PASSA, `reviews/0-11.md`). Em voo: passo 7 (QA da 0-12). Para a 0-12: a monotonia do UUIDv7 vale por processo; entre api e worker a ordem é só por milissegundo (ver o envelope do evento). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
 
 ## 2026-11-25 (11:15) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -187,7 +187,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 agente rodando.** Tudo commitado e publicado nos três repositórios (raiz, `backend/`, `frontend/`).
 O estado completo está no `ESTADO.md`; a evidência do dia, em `planning/arquivo/0-11-e-0-20-evidencia.md`.
 
-**Onda 0 (fundação):** 16/20 fechadas — 0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-09, 0-10,
+**Onda 0 (fundação):** 17/20 fechadas (a 0-11 fechou em 25/11 às 12h) — 0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08, 0-09, 0-10,
 0-14, 0-15, 0-16, 0-17, 0-18, 0-19, 0-20. A **0-11** (e-mail) foi aprovada pelo Revisor (`reviews/0-11.md`,
 PASSA COM RESSALVAS); falta só ele conferir a regra de arquitetura `65c7928`, que entrou depois.
 Faltam **0-12** (eventos), **0-13** (arquivos), **0-04** (homologação local) e o **portão**.
@@ -250,4 +250,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). Em voo: passo 2 (Revisor, reconferência final da 0-11) e passo 7 (QA da 0-12). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
+- passo 1 feito: UUIDv7 (QA `21451c2`, Dev `d298567`, 138/138 remedido). **0-11 fechada** (reconferência final PASSA, `reviews/0-11.md`). Em voo: passo 7 (QA da 0-12). Para a 0-12: a monotonia do UUIDv7 vale por processo; entre api e worker a ordem é só por milissegundo (ver o envelope do evento). Feitos também: 3 (0-20 PASSA). Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
