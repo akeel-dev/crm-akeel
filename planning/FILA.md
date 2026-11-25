@@ -35,7 +35,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 5 (Planejador) — em voo. Feitos: 4 (`5a43572`), 6 (`5d5c898`).
+- passos 1 (QA 0-11 UUIDv7) e 3 (Revisor 0-20) — em voo. Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
 
 ## 2026-11-24 (tarde) — substituída pela seção abaixo
 
@@ -179,7 +179,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 5 (Planejador) — em voo. Feitos: 4 (`5a43572`), 6 (`5d5c898`).
+- passos 1 (QA 0-11 UUIDv7) e 3 (Revisor 0-20) — em voo. Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).
 
 ## 2026-11-25 (11:15) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -250,4 +250,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 5 (Planejador) — em voo. Feitos: 4 (`5a43572`), 6 (`5d5c898`).
+- passos 1 (QA 0-11 UUIDv7) e 3 (Revisor 0-20) — em voo. Feitos: 4 (`5a43572`), 5 (Planejador, commit do Orquestrador), 6 (`5d5c898`).

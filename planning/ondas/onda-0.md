@@ -29,7 +29,7 @@ No fim da onda existe, e não existia antes:
   guardas do ADR 0001 (`verificar-portabilidade.sh`, `cmp` do contrato);
 - backup cifrado e restaurável, com destino só por `BACKUP_S3_*`;
 - CI em cada repositório de produto e o deploy no raiz, **todos verificáveis localmente**,
-  sem depender de remoto no GitHub nem da VPS;
+  sem depender do GitHub nem da VPS;
 - um teste ponta a ponta em que uma pessoa da Akeel (fictícia) entra pelo Keycloak local e
   vê o seu nome.
 
@@ -61,6 +61,34 @@ pela Admin API (P-19). Nada nesta onda autoriza por `roles` ou `groups` (0-09, c
 | 0-18 | Cliente TS gerado do contrato, igual ao do backend | front | qa, dev | §4.2 Contrato, §12, §13.2 | leve | 0-17; entre repos: 0-09 |
 | 0-19 | SPA leva ao login, mostra quem entrou, nunca toca em token | front | qa, dev | D-07, §5.1, P-19, RF-UI-03, RF-UI-07 | **completo (IAM)** | 0-18 |
 | 0-20 | Ponta a ponta: login no Keycloak local e o nome na tela | front | qa, dev | D-07, §5.1, P-18, §12 e2e, RNF-11 (parcial) | **completo (IAM)** | 0-19; entre repos: 0-09, 0-02 |
+
+## Andamento (2026-11-25): 16/20 fechadas
+
+Fonte: o Registro de cada story, `reviews/<id>.md` e a evidência transcrita em
+`planning/arquivo/` (`0-09-sabotagens.md`, `0-10-arquiteto.md`, `0-19-sabotagens.md`,
+`0-11-e-0-20-evidencia.md`).
+
+| Id | Estado | Revisão | Falta |
+|---|---|---|---|
+| 0-01, 0-02, 0-03, 0-05, 0-06, 0-07, 0-08 | fechada | `reviews/<id>.md` | — |
+| 0-09 | fechada | `reviews/0-09.md` (reconferência PASSA COM RESSALVAS) | — (contrato no frontend: `299c66a`, `cmp` 0) |
+| 0-10 | fechada | `reviews/0-10.md` (reconferência PASSA, `872f94f`) | — |
+| 0-14, 0-15, 0-16, 0-17, 0-18, 0-19 | fechada | `reviews/<id>.md` | — |
+| 0-20 | fechada | `reviews/0-20.md` (PASSA COM RESSALVAS, `43ce802`) | reconferência das correções `63752e9` (N1, N3), em andamento |
+| 0-11 | revisada, não fechada | `reviews/0-11.md` (PASSA COM RESSALVAS, `5c8d747`) | correção N2 (UUIDv7) em andamento; N1 (QA); reconferência da regra `65c7928` e das correções |
+| 0-12 | não iniciada | — | depois da N2 da 0-11 |
+| 0-13 | não iniciada | — | depois da 0-12 |
+| 0-04 | não iniciada | — | por último (inclui o critério 11, STARTTLS na homologação) |
+| portão | — | — | depois da 0-04 |
+
+**Risco a observar: intermitência do `RunModeSelectionTest`** (`reviews/0-11.md` N6).
+`withoutAModeTheLaunchedProcessIsTheApi` deu `503` na primeira resposta da saúde, 75 ms
+depois do `Started CrmApplication`, em 1 de 5 execuções; o teste aceita a primeira resposta
+em vez de esperar 200, e a causa não foi atribuída a nenhuma story. Também houve 2 falhas de
+infraestrutura (Keycloak do Testcontainers sem subir em 270 s). Não vira story agora. **Gatilho:**
+se aparecer de novo numa `comandos.suite` (inclusive no portão), o QA abre
+`conflitos/qa-runmode-saude-503.md` e a correção do teste (esperar 200 com prazo) entra antes
+do portão. Quem medir a suíte registra se o teste passou de primeira.
 
 **Ciclo por papel.** Stories com `qa` seguem QA → Dev → Revisor. Stories só de `devops`
 (0-01, 0-02, 0-03, 0-04, 0-07, 0-15) seguem DevOps → Revisor, com a verificação pelo
@@ -124,7 +152,7 @@ erro, `decisoes §21`, entrou como critério 10 da 0-19);
 
 | Item da spec | Story | Ou: fora desta onda, porque |
 |---|---|---|
-| CI/CD | 0-07, 0-15 (CI), 0-04 (deploy, local) | execução real no GitHub e na VPS: pendências "remoto" e "VPS" |
+| CI/CD | 0-07, 0-15 (CI), 0-04 (deploy, local) | deploy real na VPS: pendência "VPS" (o remoto existe desde 24/11) |
 | Keycloak | 0-02, 0-09, 0-19, 0-20 (realm local `crm`, igual ao real, nome só por `KEYCLOAK_REALM`) | login contra o realm real: clientes criados (`decisoes §15`); em dev só à mão, pelo `crm-bff-dev`; homologação com o real espera a Onda 1 e o cadastro de `https://crm.akeel.com.br/` (pendência) |
 | Outbox | 0-12 (ADR 0002) | purga das tabelas: *depois, se* pesarem |
 | Jobs | 0-10 | — |
@@ -138,9 +166,9 @@ erro, `decisoes §21`, entrou como critério 10 da 0-19);
 |---|---|---|
 | 1. Build e testes (unitário, Testcontainers, arquitetura) | 0-07, 0-15 | — |
 | 2. Análise estática e de dependências | 0-07 (OWASP DC ou equivalente), 0-15 (`npm audit`) | chave da NVD, se faltar: pendência |
-| 3. Build das imagens | 0-07, 0-15 | publicar num registro: depende do remoto |
+| 3. Build das imagens | 0-07, 0-15 | publicar num registro: depende da VPS e da liberação do deploy (o remoto existe) |
 | 4. Homologação + e2e | 0-04 (homologação **local**), 0-20 | homologação na VPS: pendência "VPS" |
-| 5. Produção com aprovação manual, Flyway como etapa própria | 0-04 (workflow + script), 0-10 (modo `migrate`) | execução real: pendências "remoto" e "VPS" |
+| 5. Produção com aprovação manual, Flyway como etapa própria | 0-04 (workflow + script), 0-10 (modo `migrate`) | execução real: pendência "VPS" |
 
 ### C. Backups (§4.6)
 
@@ -278,6 +306,17 @@ erro, `decisoes §21`, entrou como critério 10 da 0-19);
   (0-09, crit. 9). Gêmeo por presença: com a sessão válida e o token renovado, a conexão
   continua aberta.
 
+- **`platform.mail` fechado a módulos de negócio** (`reviews/0-11.md` N8, sabotagem S7:
+  `Module 'identity' depends on non-exposed type … platform.mail.SystemMail`). Nenhuma story
+  da Onda 0 manda e-mail de negócio. A primeira que mandar (convite do IAM, RF-IAM-02, ou o
+  módulo NOT) precisa ter, nos arquivos do Dev,
+  `backend/src/main/java/br/com/akeel/crm/platform/mail/package-info.java` com
+  `@org.springframework.modulith.NamedInterface("mail")` (o mesmo caso de `platform.jobs` na
+  0-11, critério 9), e como critério: o `ModularityTest` verde com o módulo de negócio usando
+  `SystemMail`/`OutgoingMail`, e `platform.openapi` continuando fechado (gêmeo). A interface
+  nomeada abre os tipos públicos do pacote; o SMTP continua só em `platform.mail` pela regra
+  `smtp_only_in_platform_mail` do `ArchitectureTest`.
+
 ## Pendências que esta onda não resolve
 
 | Identificador | O que bloqueia | Quem decide |
@@ -291,7 +330,6 @@ erro, `decisoes §21`, entrou como critério 10 da 0-19);
 | P-09 (relay e MFA) | segurança do relay; MFA para todos | Akeel (admin do Workspace) |
 | P-08 (retenção x backup) | política de retenção final | Akeel (jurídico) |
 | P-07 (fim do Pipedrive) | prazo; se apertar, o ADR prevê a saída "disco local" no lugar do Garage | Akeel (financeiro) |
-| Remoto do raiz no GitHub (e de `backend`/`frontend`) | rodar de verdade os workflows de 0-04, 0-07, 0-15; publicar imagens. `decisoes §10` não diz quem cria nem o nome | humano |
 | Acesso à VPS (homologação e produção), Cloudflare Tunnel e Access, segredos | deploy real; verificar o relay de dentro do `worker` (§10.4) e a saída 587 só para ele (RF-SEC-06); agendar o backup e o alerta | humano + Akeel (TI) |
 | Chave da NVD (se o Dependency-Check exigir) | passo 2 do CI do backend completo localmente | humano |
 
@@ -308,6 +346,7 @@ erro, `decisoes §21`, entrou como critério 10 da 0-19);
 | **P-18** | BFF ou o cliente público `crm-web`? | BFF mantido, login por cliente **confidencial** (`crm-bff`, nome provisório); `crm-web` não é usado para login (spec §14.1, `decisoes/2026-11-24.md §14`). A TI criou o `crm-bff` e o `crm-bff-dev` (`decisoes §15`); resta o cadastro de `https://crm.akeel.com.br/` (pendência acima) | 0-02, 0-09, 0-19, 0-20 |
 | **Três perguntas da TI** (`decisoes §15`) | Caminho do callback? Endpoint de backchannel logout? Front e BFF no mesmo domínio? | `/login/oauth2/code/keycloak` (registro `keycloak`); back-channel **desligado** na v1 (URL vazia); **mesmo host** `crm.akeel.com.br`, proxy com quatro prefixos para a BFF: ADR 0003, emenda §15; spec v1.2 §5.1 | 0-02, 0-04, 0-09, 0-19, 0-20 |
 | **P-19** | Os papéis vivem no Keycloak ou no CRM? | No CRM (D-09); `roles` e `groups` não autorizam nada; o CRM sincroniza `/Perfis/*` pela Admin API (spec §14.1, `decisoes/2026-11-24.md §14`). A sincronização e o mapeamento são da Onda 1 | 0-02, 0-09, 0-19 |
+| **Remoto do raiz** | O raiz (e `backend`/`frontend`) tem remoto no GitHub? | Sim: o raiz em `github.com/akeel-dev/crm-akeel` desde 24/11; os três repositórios são publicados pelo Orquestrador depois de cada story fechada (`planning/FILA.md`). O deploy real continua dependendo da VPS e da liberação do Pedro | 0-04 (Fora) |
 | **Nome do produto** | "Akeel CRM" ou "CRM Akeel"? | "CRM Akeel", o da spec (`decisoes/2026-11-24.md §13`, corrige o §12) | 0-17 |
 
 ## Portão
