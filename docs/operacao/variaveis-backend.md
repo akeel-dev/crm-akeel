@@ -64,7 +64,7 @@ api **e** o worker leem as mesmas; nenhuma das seis primeiras tem padrão.
 | `CRM_STORAGE_PATH_STYLE` | sim | `true` (Garage) | `@NotNull Boolean` | idem |
 | `CRM_STORAGE_ACCESS_KEY` | sim, **segredo** | `"$(cat deploy/local/secrets/garage_s3_access_key_id)"` | `@NotBlank` | idem |
 | `CRM_STORAGE_SECRET_KEY` | sim, **segredo** | `"$(cat deploy/local/secrets/garage_s3_secret_access_key)"` | `@NotBlank` | idem |
-| `CRM_STORAGE_CORS_ORIGINS` | não | `http://localhost:5173` (lista separada por vírgula) | nenhuma | lista vazia. Só é usada por `applyBucketCors()`, que **ninguém chama hoje** (`reviews/0-13.md`, N1): definir a variável não aplica CORS no bucket |
+| `CRM_STORAGE_CORS_ORIGINS` | não (no deploy: sim) | `http://localhost:5173` (lista separada por vírgula) | nenhuma | lista vazia. Só é lida pelo comando `--crm.storage.apply-cors` (backend `46e767a`), que aplica o CORS no bucket e sai; a subida normal do api e do worker não toca no CORS. O deploy roda esse comando como passo único, antes de trocar as instâncias, com a origem pública (`docs/operacao/deploy.md`) |
 | `CRM_STORAGE_MULTIPART_PART_SIZE` | não | `5MB` | **nenhuma** | vale `5MB`. Não baixar: `0B` sobe e estoura no primeiro multipart, e o S3 exige 5 MiB por parte exceto a última (`reviews/0-13.md`, N3) |
 
 Não existe `CRM_DB_PASSWORD`: para o banco valem os `SPRING_DATASOURCE_*` acima.

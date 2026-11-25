@@ -1,0 +1,75 @@
+services:
+  postgres:
+    image: crm-akeel/postgres:18.7-pgbackrest-2.60.1
+    build:
+      context: .
+      dockerfile: postgres/Dockerfile
+    restart: unless-stopped
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=crm-pgbackrest archive-push %p
+      - -c
+      - archive_timeout=300
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      BACKUP_MODO: ${BACKUP_MODO:?}
+    secrets: [postgres_password, crm_db_password, backup]
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - ./producao/postgres/10-banco.sh:/docker-entrypoint-initdb.d/10-banco.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d crm"]
+      interval: 2s
+      timeout: 5s
+      retries: 60
+
+  garage:
+    image: dxflrs/garage:v2.5.0
+    restart: unless-stopped
+    secrets: [garage_rpc_secret, garage_admin_token]
+    volumes:
+      - ./producao/garage.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+    healthcheck:
+      test: ["CMD", "/garage", "status"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  garage-init:
+    image: curlimages/curl:8.23.0
+    restart: unless-stopped
+    entrypoint: ["sh", "/opt/crm/init.sh"]
+    environment:
+      S3_BUCKET: ${CRM_STORAGE_BUCKET:?}
+    secrets: [garage_admin_token, garage_s3_access_key_id, garage_s3_secret_access_key]
+    volumes:
+      - ./garage/init.sh:/opt/crm/init.sh:ro
+    depends_on:
+      garage:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/pronto"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+secrets:
+  postgres_password:
+    file: ${CRM_SEGREDOS:?}/postgres_password
+  garage_rpc_secret:
+    file: ${CRM_SEGREDOS:?}/garage_rpc_secret
+  garage_admin_token:
+    file: ${CRM_SEGREDOS:?}/garage_admin_token
+  backup:
+    file: ${CRM_SEGREDOS:?}/backup
+
+volumes:
+  postgres-data:
+  garage-meta:
+  garage-data:

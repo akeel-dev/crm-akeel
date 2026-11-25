@@ -1,0 +1,98 @@
+x-backend: &backend
+  image: crm-backend:${CRM_BACKEND_TAG:?}
+  environment: &backend-ambiente
+    SPRING_PROFILES_ACTIVE: prod
+    SPRING_CONFIG_IMPORT: configtree:/run/secrets/
+    KEYCLOAK_BASE_URL: ${KEYCLOAK_BASE_URL:?}
+    KEYCLOAK_REALM: ${KEYCLOAK_REALM:?}
+    KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:?}
+    CRM_PUBLIC_URL: ${CRM_PUBLIC_URL:?}
+    SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:?}
+    SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:?}
+    CRM_STORAGE_ENDPOINT: ${CRM_STORAGE_ENDPOINT:?}
+    CRM_STORAGE_REGION: ${CRM_STORAGE_REGION:?}
+    CRM_STORAGE_BUCKET: ${CRM_STORAGE_BUCKET:?}
+    CRM_STORAGE_PATH_STYLE: ${CRM_STORAGE_PATH_STYLE:?}
+    CRM_STORAGE_CORS_ORIGINS: ${CRM_ORIGEM_PUBLICA:?}
+    MAIL_HOST: ${MAIL_HOST:?}
+    MAIL_PORT: ${MAIL_PORT:?}
+    MAIL_EHLO_NAME: ${MAIL_EHLO_NAME:?}
+  secrets:
+    - source: crm_bff_client_secret
+      target: KEYCLOAK_CLIENT_SECRET
+    - source: crm_db_password
+      target: spring.datasource.password
+    - source: garage_s3_access_key_id
+      target: crm.storage.access-key
+    - source: garage_s3_secret_access_key
+      target: crm.storage.secret-key
+
+x-saude-backend: &saude-backend
+  test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /actuator/health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+  interval: 3s
+  timeout: 5s
+  retries: 60
+  start_period: 10s
+
+services:
+  migrate:
+    <<: *backend
+    profiles: [passos]
+    restart: "no"
+    environment:
+      <<: *backend-ambiente
+      CRM_MODE: migrate
+
+  aplicar-cors:
+    <<: *backend
+    profiles: [passos]
+    restart: "no"
+    command: ["--crm.storage.apply-cors"]
+
+  api:
+    <<: *backend
+    restart: unless-stopped
+    healthcheck: *saude-backend
+
+  worker:
+    <<: *backend
+    restart: unless-stopped
+    environment:
+      <<: *backend-ambiente
+      CRM_MODE: worker
+    healthcheck: *saude-backend
+
+  frontend:
+    image: crm-frontend:${CRM_FRONTEND_TAG:?}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+  proxy:
+    image: nginxinc/nginx-unprivileged:1.30.6-alpine3.24@sha256:f5116ed4606f3eb015dd4a8e28cb9b351476dc0ad4bc6e9f93b19cec130cdf03
+    restart: unless-stopped
+    environment:
+      CRM_ESQUEMA_PUBLICO: ${CRM_ESQUEMA_PUBLICO:?}
+      CRM_PROXY_CONFIGURACAO: ${CRM_PROXY_CONFIGURACAO:?}
+    volumes:
+      - ./aplicacao/proxy.conf.template:/etc/nginx/templates/default.conf.template:ro
+    ports:
+      - "${CRM_PROXY_PUBLICACAO:?}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+secrets:
+  crm_bff_client_secret:
+    file: ${CRM_SEGREDOS:?}/crm_bff_client_secret
+  crm_db_password:
+    file: ${CRM_SEGREDOS:?}/crm_db_password
+  garage_s3_access_key_id:
+    file: ${CRM_SEGREDOS:?}/garage_s3_access_key_id
+  garage_s3_secret_access_key:
+    file: ${CRM_SEGREDOS:?}/garage_s3_secret_access_key
