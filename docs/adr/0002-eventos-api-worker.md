@@ -42,8 +42,8 @@ Spring, ou ele conhece os listeners e os executa, ou não conhece e não grava n
    **ninguém** publica evento de domínio direto no `ApplicationEventPublisher`.
 2. **O repasse é uma tarefa recorrente do db-scheduler** (portanto só no `worker`, ADR
    0001 decisão 4), registrada em `platform.jobs` e delegando a `platform.events`: lê
-   lotes de `outbox_event` com `relayed_at IS NULL ORDER BY id FOR UPDATE SKIP LOCKED`,
-   e, **numa transação por lote**, publica cada envelope no `ApplicationEventPublisher`
+   lotes de `outbox_event` com `relayed_at IS NULL ORDER BY occurred_at, id FOR UPDATE SKIP LOCKED`
+   (era `ORDER BY id`; ver emenda de 2026-11-25, item 4), e, **numa transação por lote**, publica cada envelope no `ApplicationEventPublisher`
    do `worker` e marca `relayed_at`. O registro do Modulith grava, nessa mesma transação,
    uma publicação por consumidor. Intervalo inicial: 1 s.
 3. **Consumidores são `@ApplicationModuleListener`** (assíncronos, transação própria,
@@ -82,15 +82,18 @@ existem no contexto dele (mesmo artefato), mas nada ali os aciona.
 
 | Regra | Teste que fica vermelho | Comando |
 |---|---|---|
-| Só `platform.events` publica no `ApplicationEventPublisher` (ninguém pula a `outbox_event`) | `ArchitectureTest`: nenhuma classe fora de `..platform.events..` chama `ApplicationEventPublisher.publishEvent` nem depende de `ApplicationEventPublisher` | `comandos.arquitetura` |
-| Consumidor de evento de domínio é assíncrono e registrado | `ArchitectureTest`: todo método cujo parâmetro é o envelope de domínio e que tem `@EventListener`/`@TransactionalEventListener` (meta-anotado) é `@ApplicationModuleListener` | `comandos.arquitetura` |
+| Só `platform.events` publica no `ApplicationEventPublisher` (ninguém pula a `outbox_event`) | `ArchitectureTest.only_platform_events_uses_the_application_event_publisher`: nenhuma classe fora de `..platform.events..` chama `ApplicationEventPublisher.publishEvent` nem depende de `ApplicationEventPublisher` | `comandos.arquitetura` |
+| Consumidor de evento de domínio é assíncrono e registrado | `ArchitectureTest.domain_event_consumers_are_application_module_listeners`: todo método cujo parâmetro é o envelope de domínio e que tem `@EventListener`/`@TransactionalEventListener` (meta-anotado) é `@ApplicationModuleListener` | `comandos.arquitetura` |
 | db-scheduler continua só em `platform.jobs` (ADR 0001) | regra já existente do `ArchitectureTest`: as tarefas de repasse e de reentrega são registradas em `platform.jobs` | `comandos.arquitetura` |
 | **O `worker` entrega; o `api` não** | Teste de integração da 0-12 (QA): dois contextos, perfil `api` e perfil `worker`, no mesmo PostgreSQL de Testcontainers; o `api` publica; o consumidor de teste conta **0** no `api` e **1** no `worker`; `event_publication` só ganha linhas depois do repasse | `comandos.suite` |
 | Mesma transação | Teste da 0-12: rollback não deixa linha em `outbox_event`; `DomainEvents.publish` fora de transação lança exceção | `comandos.suite` |
 
-As duas regras de `ArchitectureTest` são escritas pelo Arquiteto na 0-12, com
-sabotagem registrada (publicar direto do `ApplicationEventPublisher` num pacote de módulo
-de teste; consumidor com `@EventListener` simples).
+As duas regras de `ArchitectureTest` foram escritas pelo Arquiteto na 0-12 (2026-11-25),
+com as sabotagens (publicar direto no `ApplicationEventPublisher` num pacote de módulo de
+teste; consumidor com `@EventListener` simples) registradas no Registro da story, não em
+comentário. As duas olham só para `src/main` (`ImportOption.DoNotIncludeTests`): os
+consumidores de teste da 0-12 ficam fora. A segunda reconhece o envelope pelo tipo do
+parâmetro; um `@EventListener(DomainEvent.class)` sem parâmetro escapa dela.
 
 ## Consequências para o time
 
@@ -125,12 +128,37 @@ uma regra sobre ordem que o UUIDv7 da 0-11 tornou tentadora.
    antes de o Spring registrar os `@ApplicationModuleListener`: o `publishEvent` não
    encontra consumidor, o registro não grava publicação, `relayed_at` é marcado e o
    evento se perde sem erro. Regra: o db-scheduler do `worker` usa `ContextReadyStart`.
-   Guardado por: `DomainEventOutboxTest.eventsStoredWhileTheWorkerIsDownAreRelayedAndDeliveredOnceWhenItStarts`
-   (sabotagem S10, `ImmediateStart`: 1 falha, evento perdido), via `comandos.suite`.
+   Guardado por (corrigido em 2026-11-25, `reviews/0-12.md` N2):
+   `DomainEventOutboxTest.theApiOnlyStoresTheEventAndTheWorkerRelaysAndDeliversItOncePerConsumer`
+   e `DomainEventOutboxTest.publicationsLeftInFlightByAWorkerThatDiedAreMarkedFailedAndResubmittedOnlyByAWorker`,
+   via `comandos.suite`. Sabotagem S10 (`ImmediateStart`), medida pelo Revisor contra o
+   código real em 3 rodadas: 2 falhas nas 3, sempre essas duas. O teste antes citado aqui,
+   `eventsStoredWhileTheWorkerIsDownAreRelayedAndDeliveredOnceWhenItStarts`, ficou
+   **verde** nas 3: não guarda esta regra. **A detecção depende de uma corrida na subida
+   do `worker`:** só fica vermelha se o repasse rodar antes de os listeners estarem
+   registrados. Hoje isso acontece 3 de 3 vezes; uma máquina mais rápida, um intervalo de
+   repasse maior ou uma mudança na ordem de inicialização do Spring podem deixá-la verde
+   com `ImmediateStart`. A guarda é probabilística, não determinística. *Depois, se:* a
+   sabotagem S10 passar verde em alguma rodada, a guarda tem de ser trocada por uma que não
+   dependa de tempo (por exemplo, afirmar no contexto `worker` que o `Scheduler` foi
+   criado com `ContextReadyStart`).
 3. **Ordem entre processos não vem do id.** O UUIDv7 é monotônico **por processo**; `api`
    e `worker` (e mais de uma instância de cada) geram ids com relógios e contadores
-   próprios. O `ORDER BY id` do repasse (decisão 2) é só uma ordem de varredura estável,
-   não uma ordem global de eventos. Nenhum consumidor nem regra de negócio deve deduzir
+   próprios. O `ORDER BY` do repasse (decisão 2; item 4 abaixo) é só uma ordem de
+   varredura estável, não uma ordem global de eventos. Nenhum consumidor nem regra de negócio deve deduzir
    ordem global entre eventos pelo `id`; a decisão 6 (sem ordem garantida) continua
    valendo. Quem precisar de ordem usa um dado de domínio (versão da entidade, por
    exemplo), decidido em ADR próprio quando aparecer.
+4. **O repasse ordena por `occurred_at, id`, não só por `id`** (`reviews/0-12.md` N1).
+   O código da 0-12 (`OutboxRelay`) usa `where relayed_at is null order by occurred_at, id
+   limit ? for update skip locked`, servido pelo índice parcial
+   `outbox_event_pending_idx (occurred_at, id) where relayed_at is null` (`V5__domain_events.sql`).
+   Aceito a forma do código e corrijo a decisão 2. Motivo: as duas formas dão só uma
+   varredura estável (o `occurred_at` também vem do relógio de cada processo, então não é
+   ordem global, item 3); o índice parcial já existe e cobre só as linhas pendentes, então
+   a varredura não cresce com as linhas já repassadas, que ficam na tabela até haver purga.
+   Alternativa mais barata considerada: `ORDER BY id` pela chave primária, sem índice
+   extra. Não vale: sem purga, a varredura pela PK atravessa as linhas já repassadas
+   antes de achar as pendentes. *Gatilho para rever:* a purga de `outbox_event` entrar e
+   manter a tabela pequena. Nenhum teste fixa esta ordem (o critério da 0-12 não a
+   exige, decisão 6); `occurred_at` na ordenação **não** é promessa de ordem a consumidor.
