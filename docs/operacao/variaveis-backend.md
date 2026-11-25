@@ -58,8 +58,56 @@ Atenção: o bloco "Rodar o backend e o frontend contra este ambiente" de
 
 | Variável | Obrigatória | Exemplo | Efeito / se faltar |
 |---|---|---|---|
-| `CRM_MODE` (ou `--crm.mode=`) | não | `migrate` · `worker` | `migrate`: só roda o Flyway e sai (`RunModes`). `worker`: só `/actuator/health` responde, o resto `404` (`RunModeConfig`). Ausente: modo api |
+| `CRM_MODE` (ou `--crm.mode=`) | não (na VPS: `worker` no contêiner do worker, `migrate` no de migração) | `migrate` · `worker` | `migrate`: só roda o Flyway e sai (`RunModes`). `worker`: só `/actuator/health` responde, o resto `404` (`RunModeConfig`); é o único modo que envia e-mail (o api só enfileira). Ausente: modo api |
+| `HOSTNAME` | não (definida pelo Docker) | id do contêiner | `application.yml`, `db-scheduler.scheduler-name: ${HOSTNAME:crm}`: é o nome do nó no agendador. O Docker define sozinho em cada contêiner. **Fora do Docker** (ou se alguém a sobrescrever com o mesmo valor), todos os nós viram `crm` e o agendador não distingue quem pegou cada execução. Não definir à mão no compose |
 | `SPRING_PROFILES_ACTIVE` | não (produção: `prod`) | `prod` | com `prod`, o api e o worker recusam subir se houver migração pendente. Ausente: o Flyway migra na subida |
+
+## E-mail do sistema (perfil `prod`)
+
+Origem: `reviews/0-11.md`, N3. Lidas só em `application-prod.yml` (§10.4: relay do
+Google Workspace, sem autenticação, STARTTLS obrigatório). Fora do perfil `prod`, o
+`application.yml` fixa `localhost:1025` (o Mailpit do `compose.yaml`) e nenhuma destas
+variáveis é lida. Só o `worker` abre conexão SMTP (RF-SEC-06); no api elas são
+inofensivas, mas a mesma lista serve aos dois contêineres.
+
+| Variável | Obrigatória | Padrão / exemplo | Onde é lida | Se faltar |
+|---|---|---|---|---|
+| `MAIL_HOST` | não | `smtp-relay.gmail.com` | `spring.mail.host: ${MAIL_HOST:smtp-relay.gmail.com}` | vale o padrão, que é o da §10.4 |
+| `MAIL_PORT` | não | `587` | `spring.mail.port: ${MAIL_PORT:587}` | vale o padrão (STARTTLS exigido: `starttls.required: true`) |
+| `MAIL_EHLO_NAME` | **sim, na VPS** | o nome de domínio público do servidor (§10.4: nome de domínio, **não** o nome do contêiner) | `spring.mail.properties.mail.smtp.localhost: ${MAIL_EHLO_NAME}` | **a aplicação sobe normalmente** e o EHLO sai com o texto literal `${MAIL_EHLO_NAME}` (medido pelo Revisor, `reviews/0-11.md`, sonda P1). O relay tende a recusar; a falha só aparece no envio, depois de 6 tentativas (~25 min), com a mensagem em FAILED. Conferir com o comando de verificação abaixo depois de cada mudança |
+
+Não há validação na subida: quem configura confere `MAIL_EHLO_NAME` no ambiente do
+`worker` antes de subir (`docker compose config` mostra o valor resolvido; não é segredo).
+
+### Comando de verificação de e-mail
+
+Enfileira um e-mail de teste (modelo `delivery-check`) pela fila real e sai quando a
+mensagem deixa de estar pendente: código `0` se entregue, `1` se FAILED
+(`MailConfig.deliveryCheck`). Exige `crm.mode=worker`; em outro modo a subida falha com
+`IllegalStateException`.
+
+```
+java -jar crm.jar --spring.profiles.active=prod --crm.mode=worker \
+  --crm.mail.check-to=<e-mail> --server.port=0
+```
+
+Cuidados (`reviews/0-11.md`, N4):
+
+- **É um segundo worker completo**: sobe o Tomcat, inicia o agendador e também executa
+  as outras tarefas vencidas da fila (seguro no db-scheduler, mas é carga extra). Ele
+  precisa das mesmas variáveis do worker (banco, Keycloak, `MAIL_*`).
+- **Porta da saúde**: rodando no mesmo contêiner do `worker` (`docker compose exec`), a
+  porta do health já está ocupada. Use `--server.port=0` (porta livre aleatória) ou rode
+  num contêiner à parte (`docker compose run --rm` com o mesmo serviço).
+- **Duração com o relay recusando**: não há prazo próprio. Com `crm.mail.retry-interval`
+  padrão (`PT5M`) são 6 tentativas com 5 min entre elas, então leva **cerca de 25 min**
+  para sair `1`. Com o relay aceitando, sai em segundos. Não encurtar com
+  `--crm.mail.retry-interval`: este processo também reexecuta falhas de outras mensagens
+  da fila, que passariam a usar o intervalo curto (leitura de `MailConfig`, não medido).
+- Local, contra o Mailpit: o mesmo comando sem `--spring.profiles.active=prod`; a
+  mensagem aparece em `http://localhost:8025`.
+- Nunca apontar `check-to` para um destinatário real fora da equipe; o teste do relay de
+  produção é do humano (credencial de produção não é do DevOps).
 
 ## Bloco local completo
 
@@ -82,5 +130,12 @@ export SPRING_DATASOURCE_PASSWORD="$(cat deploy/local/secrets/crm_db_password)"
   `publicUrl + "acesso-recusado"`), `RunModes` e `RunModeConfig` (`crm.mode`, perfil `prod`).
 - ✅ execução: `grep -rniE 'datasource|CRM_DB|CRM_STORAGE|getRequiredProperty' backend/src/main`
   só acha o `DataSourceAutoConfiguration` de `RunModes` e o `getRequiredProperty` do `SecurityConfig`.
+- ✅ leitura (2026-11-25): `application-prod.yml` (`MAIL_HOST`, `MAIL_PORT`,
+  `MAIL_EHLO_NAME` sem padrão), `application.yml` (`${HOSTNAME:crm}`,
+  `crm.mail.retry-interval: PT5M`, mail local `localhost:1025`), `MailConfig`
+  (`MAX_RETRIES = 5`, `deliveryCheck` exige `worker`, sai 0/1).
+- ⚠️ não medido aqui: o EHLO literal `${MAIL_EHLO_NAME}` foi medido pelo Revisor (sonda P1
+  de `reviews/0-11.md`), não por mim; os ~25 min são cálculo (6 tentativas, 5 min), não
+  cronometrados; o relay real não foi usado.
 - ⚠️ não medido: as mensagens exatas de falha de cada ausência (o backend não foi subido
   sem cada variável).
