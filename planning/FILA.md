@@ -35,7 +35,7 @@ projeto (`~/Desktop/crm-akeel`) ficam como estão.
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 4 (Arquiteto docs), 5 (Planejador), 6 (DevOps docs) — despachados em 25/11 11:30.
+- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 5 (Planejador) — em voo. Feitos: 4 (`5a43572`), 6 (`5d5c898`).
 
 ## 2026-11-24 (tarde) — substituída pela seção abaixo
 
@@ -179,7 +179,7 @@ Regra que vale em todo despacho: código sem comentários (§17/§18, também no
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 4 (Arquiteto docs), 5 (Planejador), 6 (DevOps docs) — despachados em 25/11 11:30.
+- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 5 (Planejador) — em voo. Feitos: 4 (`5a43572`), 6 (`5d5c898`).
 
 ## 2026-11-25 (11:15) — ⛳ LEIA ESTA SEÇÃO PRIMEIRO
 
@@ -229,7 +229,7 @@ e roda `sh deploy/local/verificar.sh` (exit 0) e o `comandos.pre_requisito`.
 | 7 | qa → dev → revisor | **0-12** eventos (ADR 0002) | depois do passo 1 |
 | 8 | qa → dev → revisor | **0-13** arquivos | depois da 0-12; Arquiteto refaz a sabotagem com o `S3Client` real |
 | 9 | devops | **0-04** homologação local | por último |
-| 10 | orquestrador | `/portao 0`, depois `/colher` | reescrever o `ESTADO.md` |
+| 10 | orquestrador | `/portao 0`, depois `/colher` | reescrever o `ESTADO.md`; definir gatilho para os 5 atalhos sem gatilho em `docs/arquitetura/atalhos.md` ("ao menos uma vez", saúde de e-mail desligada, dois contadores de tentativa, sessão relida, tela em branco) |
 
 Os passos 1–6 podem rodar em paralelo, respeitando um escritor por repositório (1 no backend; 3 só lê;
 4 e 5 e 6 no raiz em arquivos diferentes — commits em sequência).
@@ -250,4 +250,4 @@ Consolidadas na `COLHEITA.md` (entradas 2 a 11) em 25/11.
 
 ### Em voo
 
-- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 4 (Arquiteto docs), 5 (Planejador), 6 (DevOps docs) — despachados em 25/11 11:30.
+- passos 1 (QA 0-11 UUIDv7), 3 (Revisor 0-20), 5 (Planejador) — em voo. Feitos: 4 (`5a43572`), 6 (`5d5c898`).
