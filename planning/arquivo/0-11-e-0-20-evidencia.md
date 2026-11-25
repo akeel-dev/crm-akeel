@@ -31,3 +31,19 @@ Transcrito pelo Orquestrador dos relatórios dos papéis (2026-11-25, macOS, JDK
 `db-scheduler.scheduler-name: ${HOSTNAME:crm}` (sem lookup de hostname do macOS, 5 s por contexto).
 Antes: 31 lookups, 19:02 min (com 1 erro ambiental do Keycloak). Depois: 0 lookups, 5:59 min; na
 remedição do Orquestrador, 03:31 min. Em produção o Docker define HOSTNAME por contêiner.
+
+## 0-11 N2 — UUIDv7 (QA `21451c2`, 2026-11-25)
+
+Testes: `platform/ids/IdGeneratorTest` (5) e `SystemMailTest#theDeliveryRecordIdWrittenByEnqueueIsAVersion7UuidStampedWithTheEnqueueTime`.
+✅ Vermelho contra o código real (`c07d095`): `expected: 7 but was: 4`. No HEAD real o `test-compile` quebra
+até o Dev criar `IdGenerator` (medir em clone fixado em `c07d095`).
+
+| # | Sabotagem (clone) | Resultado |
+|---|---|---|
+| S1 | versão 4 | exit 1, 1 falha (versão) |
+| S2 | `System.currentTimeMillis()` no lugar do `Clock` | exit 1, 3 falhas |
+| S3 | sem monotonia no mesmo milissegundo | exit 1, 2 falhas (ordem) |
+| S4 | variante errada | exit 1, 1 falha (variante) |
+| S5 | `QueuedSystemMail` volta ao `UUID.randomUUID()` | exit 1, `expected: 7 but was: 4` |
+| S6 | `QueuedSystemMail` com relógio −1 h | exit 1, milissegundos do id |
+| — | restaurado | exit 0 |
