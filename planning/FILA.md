@@ -27,6 +27,7 @@ frontend 239/239 em `63752e9`), arquitetura 16/0, e2e 8/8 na homologação local
 
 **Só o Pedro pode fazer (não bloqueia o fatiamento):**
 - sessões de estudo do Pipedrive (spec §14.2) — a **5 (permissões)** e a **1 (contatos e campos)** primeiro;
+  **roteiro da 5 pronto:** `planning/decisoes/2026-11-26-roteiro-sessao-5.md` (inclui a decisão da P-19);
 - P-19: mapear os conjuntos de permissões nos 4 perfis do Keycloak;
 - com a Akeel: P-07 (prazo), P-01–P-06, provedor do backup no Brasil (P-17);
 - liberar o deploy real quando quiser (§24; condições em §29);
