@@ -1,128 +1,120 @@
 # Roteiro da sessão de estudo 5 do Pipedrive: usuários e permissões
 
 Preparado pelo Orquestrador em 2026-11-26, para o Pedro (spec §14.2). Alimenta o módulo **USR** e a
-**P-19** (mapear os conjuntos de permissões nos 4 perfis). Quem conduz preenche as colunas "Resultado";
-o Planejador só fatia o USR depois que as partes A e F estiverem respondidas.
+**P-19**. Revisado no mesmo dia com a pesquisa pública do Pedro ("Pipedrive: visibilidade, permissões e
+ciclo de usuários", 26/11): o que ela já responde com documentação oficial **não** é retestado. A sessão
+fica com três partes: o inventário da conta real (A), só as lacunas na conta de teste (B) e as decisões (C).
 
-## Por que esta sessão
+O Pedro decidiu em 26/11 desconsiderar os termos de uso do Pipedrive para estes estudos.
 
-O estudo de outubro foi feito com **um usuário só** (um administrador). Tudo o que depende de um segundo
-usuário ficou "não testado" (`pipedrive/data-model/permissions.md`, Q-006). O que hoje vem só da
-documentação: quem edita funis, quem exclui negócios, o que "Dono" esconde, e a visibilidade de funil.
+## O que a pesquisa já responde (não retestar)
+
+- Os 4 níveis de "Visível para", seguidores, grupos pai e filho, e o funil bloqueado por grupo (vale mais
+  que "Todos").
+- Permissões nunca ampliam a visibilidade. Há três camadas: direitos de acesso, conjunto de permissões e
+  grupo de visibilidade.
+- A lista de permissões do app de negócios e as globais.
+- O ciclo do usuário: convite, desativação com transferência, reativação e exclusão (só de desativado).
+- Os planos: grupos e conjuntos personalizados só no **Premium** ou superior.
+- O que o U2 vê e faz em 17 cenários (cenários 1 a 17 da pesquisa).
 
 ## Antes de começar (Pedro)
 
-1. **Plano da conta.** Na conta real, abra a página de cobrança e anote o plano. Pela documentação
-   (`SRC-041`), grupos de visibilidade e conjuntos de permissões **não existem nos planos de entrada**.
-   Se o plano da Akeel não os tiver, a parte A fica mais curta, e a conta de teste precisa de um plano
-   que os tenha (o teste grátis costuma liberar).
-2. **Conta de teste** separada (§14.2: nunca escrever na conta real), com **dois usuários**:
-   - **U1**, administrador (quem conduz);
-   - **U2**, usuário comum, **sem** permissão de administrador, com outro e-mail (um apelido do mesmo
-     e-mail serve, se o Pipedrive aceitar).
-3. Dois navegadores ou duas janelas anônimas: U1 numa, U2 na outra. Vários casos são "U1 faz, U2 olha".
-4. Nenhum dado real de cliente. Os registros de teste começam com `[S5]`, para achar e apagar no fim.
-5. **Quem conduz:** você à mão ou um agente com o Claude in Chrome, com você na tela. Recomendo o agente
-   na parte B em diante; a parte A é leitura da conta real e fica melhor com você.
+1. Anotar o plano da conta da Akeel (Cobrança → Gerenciar assinatura).
+2. Conta de teste **Premium ou superior** (o teste grátis costuma liberar), com **U1** admin e **U2**
+   comum, cada um numa janela. Registros de teste começam com `[S5]`. Nenhum dado real.
 
-Tempo estimado: **2 a 3 horas** (A: 20 min; B a E: 1h30 a 2h; F: 20 min).
+Tempo estimado: **1h a 1h30** (A: 20 min; B: 40 a 60 min; C: 20 min).
 
-## A. Inventário da conta real (só leitura, P-06)
+## A. Inventário da conta real (só leitura)
 
-Não altere nada. Não anote nomes de pessoas: use o papel ("vendedor 1") e as contagens.
+Nada é alterado. Nenhum nome de pessoa: grupos G1, G2…; conjuntos P1, P2…; funis F1, F2….
 
-| # | O que anotar | Resultado |
-|---|---|---|
-| A1 | Plano e número de usuários ativos | |
-| A2 | Os grupos de visibilidade e a árvore (quem é pai de quem) | |
-| A3 | Os conjuntos de permissões existentes e quantos usuários em cada um | |
-| A4 | Que funil cada grupo enxerga | |
-| A5 | A visibilidade padrão de um negócio novo, de uma pessoa nova e de uma organização nova | |
-| A6 | Quem é administrador hoje, e em que se distingue dos demais | |
+**A1. Conta**
 
-## B. Usuários (RF-USR-01, RF-USR-08, RF-IAM-04)
+| Item | Valor |
+|---|---|
+| Plano (nome novo ou antigo) | |
+| Usuários ativos | |
+| Com acesso às configurações da conta | |
+| Admins de negócios / admins globais | |
+| Convites pendentes / desativados | |
+
+**A2. Grupos** (padrão por tipo: dono, grupo, grupo+sub ou empresa)
+
+| Grupo | Pai | Nº de usuários | Negócio | Lead | Pessoa | Organização | Produto | Funis liberados |
+|---|---|---|---|---|---|---|---|---|
+| Padrão | | | | | | | | |
+
+**A3. Conjuntos** (abrir em Editar só para ver, sair sem salvar; sim ou não)
+
+| Permissão | Comum | P1 | P2 |
+|---|---|---|---|
+| Editar negócios de outros | | | |
+| Excluir negócios | | | |
+| Mudar o dono de negócios | | | |
+| Ver quantidade e soma no funil | | | |
+| Ver dados de outros usuários | | | |
+| Seguir outros usuários | | | |
+| Ver nomes de itens que não pode acessar | | | |
+| Mudar a visibilidade de itens | | | |
+| Estatísticas de outros e da empresa | | | |
+| Exportar listas / edição em massa | | | |
+| Excluir atividades | | | |
+
+**A4. Distribuição:** quantos usuários em cada par grupo × conjunto.
+
+## B. Lacunas, na conta de teste
+
+Só o que a pesquisa não respondeu ou deixou contraditório.
 
 | # | Caso | O que observar | Resultado |
 |---|---|---|---|
-| B1 | U1 convida um usuário | Campos pedidos no convite (grupo? conjunto? papel?) e o estado até o aceite | |
-| B2 | U1 desativa U2 com negócios, atividades e contatos de U2 | Oferece transferir? Por tipo ou tudo junto? O que acontece com os itens fechados? | |
-| B3 | U1 reativa U2 | U2 recupera os itens, o grupo e o conjunto? | |
-| B4 | Um usuário inativo | Aparece nos seletores de dono e de responsável? E nos filtros e relatórios? | |
+| B1 | U2 é dono de um negócio num funil que U1 bloqueia para o grupo de U2 | U2 ainda vê o próprio negócio? (a pesquisa se contradiz) | |
+| B2 | Nota ligada a um negócio que U2 vê e a uma pessoa que U2 não vê | A nota aparece inteira, oculta ou some? | |
+| B3 | U2 sem permissão tenta excluir negócio, exportar, editar em massa, mudar dono | O controle **some**, fica **desabilitado** ou dá **erro**? | |
+| B4 | U1 tira uma permissão de U2 com U2 logado | Vale na hora ou só ao recarregar ou entrar de novo? | |
+| B5 | U1 desativa U2 com negócios, contatos e atividades | Dá para escolher um destino diferente por tipo de item? | |
+| B6 | U1 reativa U2 | O que volta sozinho (grupo, conjunto, itens não transferidos, automações) | |
+| B7 | U1 menciona U2 numa nota de um negócio que U2 não vê | U2 recebe notificação? Com que conteúdo? | |
+| B8 | Grupo de U2 com acesso ao funil, mas sem nenhum negócio visível nele | O funil aparece vazio ou some? | |
+| B9 | Com as duas janelas abertas, U1 move um negócio (Q-009) | U2 vê sem recarregar? Em quanto tempo? | |
 
-## C. Conjuntos de permissões (RF-USR-03, §5.5)
+## C. Decisões do Pedro
 
-| # | Caso | O que observar | Resultado |
+Cada linha tem a recomendação do Orquestrador. Basta "aceito" ou a sua escolha.
+
+| # | Ponto | Pipedrive | Nossa spec hoje | Recomendação | Sua decisão |
+|---|---|---|---|---|---|
+| C1 | Seguir um **usuário** (ver todos os itens dele) | existe, com permissão própria | não existe | Fora da v1: abre visibilidade por uma porta lateral | |
+| C2 | Padrão de "Visível para" | por grupo e por tipo de item | um padrão da empresa | Manter o da empresa na v1 | |
+| C3 | Nota ou atividade ligada a vários itens | exige ver **todos** os ligados | herda do item | Adotar a regra do Pipedrive (mais segura) | |
+| C4 | Dono num funil bloqueado para o grupo dele | contraditório (B1) | ambíguo | Dono sempre vê o que já é dele; o sistema não deixa atribuir dono sem acesso ao funil | |
+| C5 | Permissões ausentes da §5.5 | mudar a visibilidade, ver nomes de ocultos, ver totais do funil, editar data de ganho/perda | ausentes | Incluir as quatro | |
+| C6 | Dois admins (de negócios e global) | existem | um admin | Um admin só | |
+| C7 | Conjunto padrão do usuário comum | sem padrão público | Vendedor (§5.5) | Restritivo: edita só os próprios, não exclui nem exporta | |
+| C8 | Item ligado oculto | nome ou "oculto", por permissão | — | Mostrar "Item restrito" com "Pedir acesso"; texto nosso | |
+| C9 | Notificação de item invisível | não documentado | — | Nunca notificar nem mostrar prévia | |
+| C10 | Funil sem acesso / sem negócio visível | oculto / vazio | — | Sem acesso: some; com acesso e nada visível: vazio | |
+
+**P-19: os 4 perfis do Keycloak.** A §5.5 não tem conjunto para Visualizador.
+
+| Perfil | Conjunto no CRM | Recomendação | Sua decisão |
 |---|---|---|---|
-| C1 | Abrir a tela de conjuntos | A lista **completa** de permissões e os conjuntos padrão (anotar em tabela) | |
-| C2 | Escopos | A permissão vale só para os itens próprios, para o grupo ou para todos? Onde se escolhe? | |
-| C3 | U2 com o conjunto padrão de usuário comum tenta: excluir negócio próprio, excluir negócio de U1, exportar, editar em massa, mesclar contatos, trocar o dono, editar funil, criar campo | Para cada ação: o botão **some**, fica **desabilitado** ou dá **erro** ao clicar? | |
-| C4 | U1 tira de U2 uma permissão (ex.: excluir negócio) | Vale na hora para U2, ou só depois de recarregar ou entrar de novo? | |
-| C5 | Duplicar e excluir um conjunto em uso | O que acontece com os usuários do conjunto excluído | |
+| `/Perfis/Administradores` | Administrador | Tudo | |
+| `/Perfis/Gestores` | Gestor | Vendas com escopo de grupo, relatórios de outros, metas, desconto | |
+| `/Perfis/Vendedores` | Vendedor | Criar e editar os próprios (= C7) | |
+| `/Perfis/Visualizadores` | **Visualizador (novo)** | Só ver o que a visibilidade deixa; nada de criar, editar, excluir ou exportar | |
 
-Saída da C1: a tabela "permissão do Pipedrive → chave da §5.5", com "sem correspondente" onde não houver.
+E mais duas:
+- Um conjunto personalizado fica no perfil do conjunto de origem, porque o perfil só autentica (D-09).
+- O admin escolhe o grupo de visibilidade no convite, sem padrão por perfil.
 
-## D. Grupos e visibilidade de registros (Q-006, R-048, RF-USR-02, RF-USR-05, RF-USR-06)
+## Entrega
 
-Montagem: grupos `[S5] Diretoria` (pai) → `[S5] Comercial` (filho) → `[S5] Time A` (neto), e um irmão
-`[S5] Outro`. U1 cria quatro negócios, um em cada nível de "Visível para", cada um com uma pessoa, uma
-organização, uma atividade, uma nota e um arquivo. Depois **mova U2 de grupo** e repita o olhar.
-
-| Grupo de U2 em relação ao dono | Dono | Grupo do dono | Grupo e subgrupos | Todos |
-|---|---|---|---|---|
-| Mesmo grupo | | | | |
-| Grupo acima (pai) | | | | |
-| Grupo abaixo (filho) | | | | |
-| Grupo irmão | | | | |
-| U2 seguidor do negócio | | | | |
-
-Em cada célula, anotar onde U2 vê o negócio: quadro, lista, busca, relatório, exportação e as
-atividades e notas dele. Depois:
-
-| # | Caso | O que observar | Resultado |
-|---|---|---|---|
-| D1 | U2 vê o negócio mas não a organização dele (organização com visibilidade "Dono") | O que aparece no lugar da organização | |
-| D2 | Atividade de U2 num negócio que U2 não vê | U2 vê a atividade? E o título do negócio? | |
-| D3 | Criar, mover e excluir grupos | Profundidade máxima; excluir grupo com usuários é recusado? Um usuário pode estar em dois grupos? | |
-| D4 | Quem vira seguidor automaticamente ao criar um negócio | O criador? O dono? | |
-
-## E. Funis, dono e tempo real (RF-USR-04, RF-USR-07, Q-009)
-
-| # | Caso | O que observar | Resultado |
-|---|---|---|---|
-| E1 | U1 cria um funil novo | Por padrão, U2 vê o funil? | |
-| E2 | U1 restringe o funil a um grupo sem U2 | Some do seletor de U2? Os negócios dele somem da busca, da lista e das atividades de U2, mesmo com "Todos"? | |
-| E3 | U1 passa um negócio para U2 | U2 recebe notificação? U1 continua vendo? A visibilidade muda? | |
-| E4 | U2 sem permissão de trocar o dono | O que a tela mostra | |
-| E5 | Com as duas janelas abertas, U1 move um negócio e U2 olha o quadro | Aparece sem recarregar? Em quanto tempo? | |
-
-## F. Decisão da P-19: os 4 perfis
-
-O Keycloak tem quatro perfis (§5.2): Administradores, Gestores, Vendedores e Visualizadores. A §5.5 tem
-três conjuntos padrão, e **falta o do Visualizador**. Com A e C respondidas, confirme ou corrija:
-
-| Perfil no Keycloak | Conjunto no CRM | Recomendação do Orquestrador | Sua decisão |
-|---|---|---|---|
-| `/Perfis/Administradores` | Administrador | Tudo (§5.5) | |
-| `/Perfis/Gestores` | Gestor | Vendas com escopo de grupo, relatórios de outros, metas, aprovação de desconto (§5.5) | |
-| `/Perfis/Vendedores` | Vendedor | Criar e editar os próprios; sem exclusão em massa nem exportação (§5.5) | |
-| `/Perfis/Visualizadores` | **Visualizador (novo)** | Só ver o que a visibilidade deixa; nenhuma criação, edição, exclusão ou exportação | |
-
-Mais duas perguntas:
-1. **Um conjunto personalizado** (ex.: um vendedor que exporta) fica em qual perfil do Keycloak?
-   Recomendo: no perfil do conjunto de origem, porque o perfil só autentica (D-09) e não autoriza nada.
-2. **O grupo de visibilidade padrão** de um convidado novo: vem do perfil ou o admin escolhe no convite?
-   Recomendo: o admin escolhe no convite (RF-USR-01), sem padrão por perfil.
-
-## Entrega (mesmo formato do estudo de outubro)
-
-- **Regras** a partir de **R-049**, em `pipedrive/rules/permissions.md`, no formato Dado/Quando/Então,
-  descrevendo o comportamento, sem copiar textos da tela.
-- **Evidências** a partir de **EV-064**, em `pipedrive/evidence/`, listadas no `index.csv`.
-- **Testes de paridade** novos em `pipedrive/clone/parity.md`.
-- Atualizar `pipedrive/data-model/permissions.md` e `pipedrive/topics/visibility-and-permissions.md`;
-  fechar Q-006 e Q-009 em `pipedrive/questions.md`.
-- Registrar no `pipedrive/sandbox/ledger.csv` o que foi criado na conta de teste.
-- A decisão da parte F vai para `planning/decisoes/` com a data; o Orquestrador leva para a spec (P-19).
-
-`pipedrive/**` e a spec são do Pedro (`time.yml`). Se um agente conduzir, ele só escreve aí com a sua
-autorização para esta sessão.
+- B: regras a partir de **R-049** em `pipedrive/rules/permissions.md` (Dado/Quando/Então, sem texto
+  literal da tela); evidências a partir de **EV-064**, listadas no `index.csv`; registro no
+  `pipedrive/sandbox/ledger.csv`; Q-006 e Q-009 fechadas em `pipedrive/questions.md`.
+- A pesquisa pública do Pedro vai para `pipedrive/` como fonte da sessão (a pasta é do Pedro).
+- A e C: as respostas vão para `planning/decisoes/` com a data; o Orquestrador leva para a spec (§5.4,
+  §5.5, §9.1 e P-19), e só então o Planejador fatia o USR.
